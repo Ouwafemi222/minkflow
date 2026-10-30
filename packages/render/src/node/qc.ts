@@ -115,6 +115,15 @@ export function audioLevels(pcm: Int16Array): { rmsDbfs: number; peakDbfs: numbe
   return { rmsDbfs: +db(rms).toFixed(1), peakDbfs: +db(peak).toFixed(1), clippedSamples: clipped };
 }
 
+/** Duration of an audio/video file in milliseconds, via ffprobe. */
+export async function probeMediaDurationMs(path: string): Promise<number> {
+  if (!isAbsolute(path)) throw new Error(`probeMediaDurationMs requires an absolute path, got ${path}`);
+  const { stdout } = await runFf('ffprobe', ['-v', 'error', '-print_format', 'json', '-show_format', path]);
+  const duration = Number((JSON.parse(stdout.toString()) as { format: { duration?: string } }).format.duration);
+  if (!Number.isFinite(duration) || duration <= 0) throw new Error(`Could not determine duration of ${path}`);
+  return Math.round(duration * 1000);
+}
+
 /** Validates a rendered MP4: codec/dimensions/fps/duration/audio, blank frames, silence, levels and clipping. */
 export async function qcVideo(path: string, expect: QcExpectations): Promise<QcReport> {
   if (!isAbsolute(path)) throw new Error(`qcVideo requires an absolute path, got ${path}`);

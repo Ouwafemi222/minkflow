@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./compositions": "./src/compositions/index.ts",
+    "./fonts": "./src/fonts.ts",
     "./node": "./src/node/index.ts"
   },
   "scripts": {

@@ -1,0 +1,30 @@
+{
+  "name": "@minkflow/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "start": "tsx src/main.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "verify:providers": "tsx scripts/verify-providers.ts"
+  },
+  "dependencies": {
+    "@minkflow/ai": "workspace:*",
+    "@minkflow/contracts": "workspace:*",
+    "@minkflow/db": "workspace:*",
+    "@minkflow/pipeline": "workspace:*",
+    "@minkflow/queue": "workspace:*",
+    "@minkflow/shared": "workspace:*",
+    "@minkflow/storage": "workspace:*",
+    "@sentry/node": "^11.10.0",
+    "tsx": "^4.23.15",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "typescript": "5.9.3",
+    "vitest": "^3.2.7"
+  }
+}

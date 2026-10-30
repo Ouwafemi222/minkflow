@@ -14,6 +14,11 @@
     "test:integration": "turbo run test:integration",
     "test:e2e": "pnpm --filter @minkflow/web test:e2e",
     "render:fixtures": "pnpm --filter @minkflow/render render:fixtures",
+    "db:local": "pnpm --filter @minkflow/db db:local",
+    "dev:web": "pnpm --filter @minkflow/web dev",
+    "dev:worker": "pnpm --filter @minkflow/worker dev",
+    "e2e:local": "pnpm --filter @minkflow/pipeline e2e:local",
+    "verify:providers": "pnpm --filter @minkflow/worker verify:providers",
     "format": "prettier --write ."
   },
   "devDependencies": {

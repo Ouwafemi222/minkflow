@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *' # nightly render smoke test
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Typecheck, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      APP_ENV: local
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      # Unit + integration tests. Database tests run against in-process PGlite with the real migrations and RLS;
+      # pipeline tests use the mock AI/TTS providers and a fake renderer. No secrets are needed.
+      - run: pnpm test
+      - name: Build web
+        run: pnpm --filter @minkflow/web build
+      - name: Secret scan (tracked files)
+        run: |
+          if git grep -nE '(sk-[A-Za-z0-9]{20,}|sk_live_[A-Za-z0-9]+|xi-api-key:\s*[A-Za-z0-9]{20,}|BEGIN (RSA|EC|OPENSSH) PRIVATE KEY)' -- ':!pnpm-lock.yaml'; then
+            echo "Possible secret committed"; exit 1
+          fi
+
+  e2e:
+    name: Browser e2e (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @minkflow/web exec playwright install --with-deps chromium
+      # Screenshot baselines are recorded per platform (e2e/__screenshots__/{platform}); only win32 baselines exist so
+      # far. Until linux baselines are committed (`pnpm --filter @minkflow/web test:e2e:update` on Linux), CI runs the
+      # functional assertions and skips pixel comparisons.
+      - run: pnpm --filter @minkflow/web exec playwright test --ignore-snapshots
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7
+
+  render:
+    name: Render fixtures + QC (real Remotion)
+    # Slow (downloads Chrome Headless Shell, renders ~2 videos). Nightly and on demand only.
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # TO VERIFY (V-14): exact Chrome Headless Shell system libraries on ubuntu-latest.
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libnss3 libdbus-1-3 libatk1.0-0 libgbm-dev libasound2t64 libxrandr2 libxkbcommon-dev libxfixes3 libxcomposite1 libxdamage1 libatk-bridge2.0-0 libpango-1.0-0 libcairo2 libcups2
+      - run: pnpm render:fixtures
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: render-fixtures
+          path: packages/render/out/
+          retention-days: 7

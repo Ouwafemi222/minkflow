@@ -18,6 +18,19 @@ export const TEMPLATE_IDS = [
 ] as const;
 export type TemplateId = (typeof TEMPLATE_IDS)[number];
 
+export const TEMPLATE_META: Record<TemplateId, { label: string; description: string }> = {
+  title_reveal: { label: 'Title reveal', description: 'Big title with optional subtitle and icon' },
+  stat_comparison: { label: 'Stat comparison', description: '2–4 animated numbers side by side' },
+  timeline: { label: 'Timeline', description: '2–6 dated events on a line' },
+  process_steps: { label: 'Process steps', description: '2–5 numbered steps' },
+  icon_grid: { label: 'Icon grid', description: '2–6 icons with labels' },
+  quote_focus: { label: 'Quote focus', description: 'A single highlighted quote' },
+  bar_chart: { label: 'Bar chart', description: '2–8 animated bars' },
+  line_chart: { label: 'Line chart', description: '3–12 points drawn as a line' },
+  before_after: { label: 'Before / after', description: 'Two-column contrast' },
+  closing_cta: { label: 'Closing call to action', description: 'Outro with call to action' },
+};
+
 export const TRANSITIONS = ['none', 'fade', 'slide_left', 'slide_up', 'zoom'] as const;
 export const TransitionSchema = z.enum(TRANSITIONS);
 export type Transition = z.infer<typeof TransitionSchema>;

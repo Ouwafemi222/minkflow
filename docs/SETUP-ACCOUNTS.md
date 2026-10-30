@@ -1,7 +1,8 @@
 # Step 0 — Accounts, platforms and secrets (founder checklist)
 
-Status: **founder action required**. The code runs locally in mock mode without any of these accounts
-(`AI_PROVIDER_MODE=mock`, `STORAGE_DRIVER=local`, `QUEUE_DRIVER=inline`). Real staging needs the items below.
+Status: **founder action required**. The code runs locally without any of these accounts
+(`AUTH_DRIVER=dev`, `AI_PROVIDER_MODE=mock`, `STORAGE_DRIVER=local`, `QUEUE_DRIVER=postgres`, local Postgres via
+`pnpm db:local`). Real staging needs the items below. Local quick start: see `docs/RUNBOOKS.md#local-development`.
 
 Never paste secrets into chat, git, screenshots or issues. Put them only in the platform's environment settings
 or in your local, git-ignored `.env.local` files.
@@ -12,7 +13,7 @@ or in your local, git-ignored `.env.local` files.
 | Node.js 22+ | v24 installed | none |
 | pnpm 10 | installed globally via npm | none |
 | Git | installed | none |
-| Docker Desktop + WSL2 | **missing** | Install from docker.com; required for local Supabase (`supabase start`) and Redis |
+| Docker Desktop + WSL2 | missing | Optional. Not needed for local dev (PGlite + Postgres-polling queue). Useful to test BullMQ locally (`docker compose up -d redis`) or to build the worker image |
 | Supabase CLI | missing | `pnpm dlx supabase --version` works without install; or `scoop install supabase` |
 | FFmpeg | not required | Remotion v4 ships its own ffmpeg/ffprobe binaries |
 
@@ -34,12 +35,15 @@ or in your local, git-ignored `.env.local` files.
 
 ## 3. Variable placement summary
 - **Browser (public):** only `NEXT_PUBLIC_*`.
-- **Vercel (web server):** Supabase URL/anon/service-role, `REDIS_URL` (enqueue only), S3 (signing only), Paystack secret, Sentry, `APP_BASE_URL`, `ALLOWED_ORIGINS`, `ADMIN_EMAILS`.
-- **Railway (worker):** Supabase service-role, `REDIS_URL`, S3, OpenAI, ElevenLabs, Sentry, render limits, spend caps.
+- **Vercel (web server):** `DATABASE_URL` (pooled), Supabase URL/anon key (Auth only), `AUTH_DRIVER=supabase`, `QUEUE_DRIVER` + `REDIS_URL` (publish only), S3 (URL signing only), Paystack secret, Sentry, `APP_BASE_URL`, `ALLOWED_ORIGINS`, `ADMIN_EMAILS`. The web app does **not** need OpenAI/ElevenLabs keys.
+- **Railway (worker):** `DATABASE_URL`, `QUEUE_DRIVER` + `REDIS_URL`, S3, OpenAI, ElevenLabs, Sentry, render limits, spend caps, `JOB_LEASE_SECONDS`.
+- `SUPABASE_SERVICE_ROLE_KEY` is currently unused by code (all DB access is via `DATABASE_URL`, see ADR-017); do not deploy it until something needs it.
 - **Supabase Edge Functions:** not used by this architecture.
 
 ## 4. After accounts exist
-1. Copy `.env.example` → `apps/web/.env.local` and `apps/worker/.env` and fill values.
-2. `pnpm dlx supabase link --project-ref <staging-ref>` then `pnpm dlx supabase db push`.
-3. Set `AI_PROVIDER_MODE=live`, `STORAGE_DRIVER=s3`, `QUEUE_DRIVER=bullmq`.
-4. Run `pnpm verify:providers` (worker) to check keys without spending more than a few cents.
+1. Locally: copy `.env.example` → `.env.local` at the repository root (web and worker both read it) and fill values. On Vercel/Railway, set the same names in each platform's environment settings.
+2. `pnpm dlx supabase link --project-ref <staging-ref>` then `pnpm dlx supabase db push` (applies `supabase/migrations`).
+3. Set `APP_ENV=staging`, `AUTH_DRIVER=supabase`, `AI_PROVIDER_MODE=live`, `STORAGE_DRIVER=s3`, `QUEUE_DRIVER=bullmq`.
+4. Run `pnpm verify:providers` to check OpenAI/ElevenLabs keys, model names and voice ids (well under US$0.05).
+5. In Supabase Auth settings: Site URL = `APP_BASE_URL`; redirect URL `${APP_BASE_URL}/auth/callback`; custom SMTP (Resend).
+6. Follow `docs/RUNBOOKS.md#staging-deploy` and then `docs/BETA-CHECKLIST.md`.

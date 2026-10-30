@@ -1,0 +1,15 @@
+# Minimal Supabase CLI config. `pnpm dlx supabase link --project-ref <ref>` then `pnpm dlx supabase db push`.
+project_id = "minkflow"
+
+[db]
+major_version = 15
+
+[auth]
+site_url = "env(APP_BASE_URL)"
+additional_redirect_urls = ["env(APP_BASE_URL)/auth/callback"]
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true

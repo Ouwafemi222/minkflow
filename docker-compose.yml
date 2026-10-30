@@ -1,0 +1,13 @@
+# Optional local services. Not required for the default local setup (PGlite + QUEUE_DRIVER=postgres).
+# Use it to exercise the BullMQ path locally: `docker compose up -d redis`, then set QUEUE_DRIVER=bullmq in .env.local.
+services:
+  redis:
+    image: redis:7-alpine
+    command: ['redis-server', '--appendonly', 'yes', '--maxmemory-policy', 'noeviction']
+    ports:
+      - '127.0.0.1:6379:6379'
+    volumes:
+      - redis-data:/data
+
+volumes:
+  redis-data:

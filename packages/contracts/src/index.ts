@@ -5,3 +5,5 @@ export * from './manifest';
 export * from './jobs';
 export * from './ai';
 export * from './assemble';
+export * from './pricing';
+export * from './project';
