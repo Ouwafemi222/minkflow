@@ -12,7 +12,8 @@ import { createOpenAiProvider } from './openai';
 import type { LlmProvider, TtsProvider } from './types';
 
 export interface AiEnv {
-  AI_PROVIDER_MODE: 'mock' | 'live';
+  /** mock: offline placeholders; voice: placeholder scripts + real ElevenLabs voices (local testing); live: both real. */
+  AI_PROVIDER_MODE: 'mock' | 'voice' | 'live';
   OPENAI_API_KEY?: string | undefined;
   OPENAI_MODEL_SCRIPT?: string | undefined;
   OPENAI_MODEL_STORYBOARD?: string | undefined;
@@ -26,12 +27,13 @@ export interface AiEnv {
 }
 
 export function createProvidersFromEnv(env: AiEnv): { llm: LlmProvider; tts: TtsProvider } {
-  if (env.AI_PROVIDER_MODE !== 'live') return { llm: createMockLlm(), tts: createMockTts() };
-  const required = ['OPENAI_API_KEY', 'OPENAI_MODEL_SCRIPT', 'OPENAI_MODEL_STORYBOARD', 'ELEVENLABS_API_KEY', 'ELEVENLABS_MODEL_ID', 'ELEVENLABS_VOICE_IDS'] as const;
+  if (env.AI_PROVIDER_MODE === 'mock') return { llm: createMockLlm(), tts: createMockTts() };
+  const voiceVars = ['ELEVENLABS_API_KEY', 'ELEVENLABS_MODEL_ID', 'ELEVENLABS_VOICE_IDS'] as const;
+  const required = env.AI_PROVIDER_MODE === 'voice' ? voiceVars : (['OPENAI_API_KEY', 'OPENAI_MODEL_SCRIPT', 'OPENAI_MODEL_STORYBOARD', ...voiceVars] as const);
   const missing = required.filter((k) => !env[k]);
-  if (missing.length > 0) throw new Error(`AI_PROVIDER_MODE=live requires: ${missing.join(', ')}`);
+  if (missing.length > 0) throw new Error(`AI_PROVIDER_MODE=${env.AI_PROVIDER_MODE} requires: ${missing.join(', ')}`);
   return {
-    llm: createOpenAiProvider({
+    llm: env.AI_PROVIDER_MODE === 'voice' ? createMockLlm() : createOpenAiProvider({
       apiKey: env.OPENAI_API_KEY!,
       scriptModel: env.OPENAI_MODEL_SCRIPT!,
       storyboardModel: env.OPENAI_MODEL_STORYBOARD!,

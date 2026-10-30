@@ -15,8 +15,11 @@ export default async function NewProjectPage() {
       <p className="muted" style={{ margin: 0 }}>
         We’ll draft a script for you to review first. Writing the script costs {PRICING.scriptCredits} credits.
       </p>
-      {env().AI_PROVIDER_MODE !== 'live' ? (
+      {env().AI_PROVIDER_MODE === 'mock' ? (
         <p className="alert warning small">Offline mock mode: scripts are templated and voices are placeholder tones, not real AI output.</p>
+      ) : null}
+      {env().AI_PROVIDER_MODE === 'voice' ? (
+        <p className="alert warning small">Voice test mode: scripts are templated placeholders, but narration uses real ElevenLabs voices and your ElevenLabs credits.</p>
       ) : null}
       <NewProjectForm voices={availableVoices()} />
     </div>

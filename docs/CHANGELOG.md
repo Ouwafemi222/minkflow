@@ -2,6 +2,15 @@
 
 Documentation version history is preserved in `CHANGELOG-V2.md`, `CHANGELOG-V3.md`, `CHANGELOG-V4.md`.
 
+## Voice test mode and provider quota errors (2026-10-30)
+
+- `AI_PROVIDER_MODE=voice` (local only; worker refuses it outside local): mock scripts/storyboards with real ElevenLabs
+  narration, so voices can be tested before OpenAI is funded. Studio labels it "Mock script · real voice".
+- Provider 429s caused by an exhausted account (`insufficient_quota`, `credit_balance_exhausted`, `quota_exceeded`) are no
+  longer retried as rate limits; the error keeps `reason: provider_quota_exhausted` for admin diagnostics.
+- Live checks: `verify:providers` passed OpenAI moderation and ElevenLabs TTS with timestamps; OpenAI chat failed with
+  `credit_balance_exhausted` (account unfunded). Commands run: `pnpm typecheck` (11/11), ai 13, web 7, worker 6 tests pass.
+
 ## Account page, profile photos and YouTube connection (2026-10-30)
 
 - Migration `20261030000003_profiles_youtube` (applied to the project's Supabase via `pnpm db:migrate`): profile

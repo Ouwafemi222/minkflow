@@ -15,7 +15,7 @@ import { StoryboardEditor, type SaveState } from './StoryboardEditor';
 const ACTIVE = new Set(['queued', 'running', 'retry_pending']);
 const PENDING_STATUSES = new Set(['script_pending', 'storyboard_pending', 'media_pending', 'render_queued', 'rendering', 'retry_pending']);
 
-export function ProjectStudio({ initial, mockProviders }: { initial: ProjectView; mockProviders: boolean }) {
+export function ProjectStudio({ initial, aiMode }: { initial: ProjectView; aiMode: 'mock' | 'voice' | 'live' }) {
   const router = useRouter();
   const [view, setView] = useState(initial);
   const [notice, setNotice] = useState<{ tone: 'error' | 'success' | 'warning'; text: string } | null>(null);
@@ -79,7 +79,8 @@ export function ProjectStudio({ initial, mockProviders }: { initial: ProjectView
           <div className="row small">
             <StatusBadge status={project.status} />
             <span className="muted">Balance: {credits(view.balance)} credits</span>
-            {mockProviders ? <span className="badge warning">Mock AI & voice</span> : null}
+            {aiMode === 'mock' ? <span className="badge warning">Mock AI & voice</span> : null}
+            {aiMode === 'voice' ? <span className="badge warning">Mock script · real voice</span> : null}
           </div>
         </div>
       </header>

@@ -1,7 +1,7 @@
 import { ProjectInputSchema, ScriptSchema, StoryboardDraftSchema } from '@minkflow/contracts';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { createMockLlm, createMockTts, generateStructured, planScript, planStoryboard, regenerateScene, scriptMessages, wordsFromCharacterAlignment, type LlmProvider } from './index';
+import { createMockLlm, createMockTts, createProvidersFromEnv, generateStructured, planScript, planStoryboard, regenerateScene, scriptMessages, wordsFromCharacterAlignment, type LlmProvider } from './index';
 
 const input = ProjectInputSchema.parse({ mode: 'topic', topic: 'Compound interest', audience: 'beginners', tone: 'friendly', targetSeconds: 60, language: 'en', aspectRatio: '16:9', voiceId: 'mock-ava' });
 
@@ -74,6 +74,14 @@ describe('TTS alignment', () => {
   it('rejects mismatched or non-monotonic alignment', () => {
     expect(() => wordsFromCharacterAlignment(['a'], [0, 1], [1])).toThrow();
     expect(() => wordsFromCharacterAlignment(['a', ' ', 'b'], [1, 0.5, 0.2], [1.1, 0.6, 0.3])).toThrow();
+  });
+  it('voice mode pairs mock scripts with ElevenLabs and needs only ElevenLabs settings', () => {
+    const voiceEnv = { AI_PROVIDER_MODE: 'voice' as const, ELEVENLABS_API_KEY: 'k', ELEVENLABS_MODEL_ID: 'm', ELEVENLABS_VOICE_IDS: 'v1:Ava:Calm' };
+    const { llm, tts } = createProvidersFromEnv(voiceEnv);
+    expect(llm.name).toBe('mock');
+    expect(tts.listVoices().map((v) => v.id)).toEqual(['v1']);
+    expect(() => createProvidersFromEnv({ ...voiceEnv, ELEVENLABS_API_KEY: '' })).toThrow(/ELEVENLABS_API_KEY/);
+    expect(() => createProvidersFromEnv({ ...voiceEnv, AI_PROVIDER_MODE: 'live' })).toThrow(/OPENAI_API_KEY/);
   });
   it('mock TTS returns audio with word timings', async () => {
     const result = await createMockTts().synthesize('Hello world.', 'mock-ava');

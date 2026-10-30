@@ -19,6 +19,10 @@ describe('worker env', () => {
     expect(() => loadEnv({ ...staging, DATABASE_SSL: 'verify' })).toThrow(/DATABASE_CA_CERT/);
   });
 
+  it('allows voice-test mode only locally', () => {
+    expect(() => loadEnv({ ...staging, DATABASE_SSL: 'require', AI_PROVIDER_MODE: 'voice' })).toThrow(/AI_PROVIDER_MODE/);
+  });
+
   it('defaults to no SSL for the local database', () => {
     expect(loadEnv({ APP_BASE_URL: 'http://localhost:3000', DATABASE_URL: 'postgres://x@127.0.0.1/postgres', LOCAL_STORAGE_SECRET: 'x'.repeat(16) }).DATABASE_SSL).toBe('disable');
   });

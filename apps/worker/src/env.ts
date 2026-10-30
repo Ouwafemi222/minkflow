@@ -20,7 +20,7 @@ export const WorkerEnvSchema = z
     S3_BUCKET: z.string().default('minkflow-private'),
     S3_ACCESS_KEY_ID: z.string().optional(),
     S3_SECRET_ACCESS_KEY: z.string().optional(),
-    AI_PROVIDER_MODE: z.enum(['mock', 'live']).default('mock'),
+    AI_PROVIDER_MODE: z.enum(['mock', 'voice', 'live']).default('mock'),
     OPENAI_API_KEY: z.string().optional(),
     OPENAI_MODEL_SCRIPT: z.string().optional(),
     OPENAI_MODEL_STORYBOARD: z.string().optional(),
@@ -50,7 +50,7 @@ export const WorkerEnvSchema = z
     if (env.APP_ENV !== 'local' && env.STORAGE_DRIVER === 'local') ctx.addIssue({ code: 'custom', path: ['STORAGE_DRIVER'], message: 'local storage is for local development only' });
     if (env.APP_ENV !== 'local' && env.DATABASE_SSL === 'disable') ctx.addIssue({ code: 'custom', path: ['DATABASE_SSL'], message: 'use require or verify outside local' });
     if (env.DATABASE_SSL === 'verify' && !env.DATABASE_CA_CERT) ctx.addIssue({ code: 'custom', path: ['DATABASE_CA_CERT'], message: 'required when DATABASE_SSL=verify' });
-    if (env.APP_ENV !== 'local' && env.AI_PROVIDER_MODE === 'mock') ctx.addIssue({ code: 'custom', path: ['AI_PROVIDER_MODE'], message: 'mock providers are not allowed outside local' });
+    if (env.APP_ENV !== 'local' && env.AI_PROVIDER_MODE !== 'live') ctx.addIssue({ code: 'custom', path: ['AI_PROVIDER_MODE'], message: 'mock providers are not allowed outside local' });
   });
 export type WorkerEnv = z.infer<typeof WorkerEnvSchema>;
 
