@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { env, envIssues } from '@/lib/env';
+import { env, envIssues, envFlags } from '@/lib/env';
 import { db } from '@/lib/services';
 
 export const dynamic = 'force-dynamic';
@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   const started = Date.now();
   const issues = envIssues();
-  if (issues) return NextResponse.json({ ok: false, config: issues }, { status: 503 });
+  if (issues) return NextResponse.json({ ok: false, config: issues, flags: envFlags() }, { status: 503 });
   const appEnv = env().APP_ENV;
   try {
     await db().query('select 1');

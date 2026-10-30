@@ -83,7 +83,8 @@ const ServerEnvSchema = z
   .superRefine((env, ctx) => {
     if (env.AUTH_DRIVER === 'dev' && env.APP_ENV !== 'local') ctx.addIssue({ code: 'custom', path: ['AUTH_DRIVER'], message: 'dev auth is only allowed when APP_ENV=local' });
     if (env.AUTH_DRIVER === 'dev' && env.DEV_AUTH_SECRET.length < 16) ctx.addIssue({ code: 'custom', path: ['DEV_AUTH_SECRET'], message: 'set a random 16+ char secret' });
-    if (env.AUTH_DRIVER === 'supabase' && (!env.NEXT_PUBLIC_SUPABASE_URL || !env.NEXT_PUBLIC_SUPABASE_ANON_KEY)) ctx.addIssue({ code: 'custom', path: ['NEXT_PUBLIC_SUPABASE_URL'], message: 'required for supabase auth' });
+    if (env.AUTH_DRIVER === 'supabase' && !env.NEXT_PUBLIC_SUPABASE_URL) ctx.addIssue({ code: 'custom', path: ['NEXT_PUBLIC_SUPABASE_URL'], message: 'missing or empty — copy the value from .env.local, then Redeploy' });
+    if (env.AUTH_DRIVER === 'supabase' && !env.NEXT_PUBLIC_SUPABASE_ANON_KEY) ctx.addIssue({ code: 'custom', path: ['NEXT_PUBLIC_SUPABASE_ANON_KEY'], message: 'missing or empty — copy the anon key from .env.local (starts with eyJ), then Redeploy' });
     if (env.APP_ENV !== 'local' && env.DATABASE_SSL === 'disable') ctx.addIssue({ code: 'custom', path: ['DATABASE_SSL'], message: 'use require or verify outside local' });
     if (env.DATABASE_SSL === 'verify' && !env.DATABASE_CA_CERT) ctx.addIssue({ code: 'custom', path: ['DATABASE_CA_CERT'], message: 'required when DATABASE_SSL=verify' });
     if (env.STORAGE_DRIVER === 'local' && env.APP_ENV !== 'local') ctx.addIssue({ code: 'custom', path: ['STORAGE_DRIVER'], message: 'local storage is for local development only' });
@@ -95,6 +96,19 @@ const ServerEnvSchema = z
 export type ServerEnv = z.infer<typeof ServerEnvSchema>;
 
 let cached: ServerEnv | null = null;
+
+/** Names only; true means the value is non-empty. Never includes secrets. */
+export function envFlags() {
+  const e = readEnv();
+  return {
+    DATABASE_URL: Boolean(e.DATABASE_URL),
+    NEXT_PUBLIC_SUPABASE_URL: Boolean(e.NEXT_PUBLIC_SUPABASE_URL),
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: Boolean(e.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+    AUTH_DRIVER: e.AUTH_DRIVER ?? 'default',
+    APP_ENV: e.APP_ENV ?? 'default',
+    STORAGE_DRIVER: e.STORAGE_DRIVER ?? 'default',
+  };
+}
 
 export function envIssues(): string | null {
   const parsed = ServerEnvSchema.safeParse(readEnv());
