@@ -69,6 +69,7 @@ no live provider has been called.
 | `pnpm --filter @minkflow/web build` | Production build succeeds (re-run after the final edits) |
 | `pnpm --filter @minkflow/web test:e2e` | 7/7 pass (4 marketing screenshots, creator flow to voiced storyboard + logo upload + editor screenshot, cross-user isolation, admin grant); re-run without updating snapshots also 7/7 |
 | `node --import tsx scripts/e2e-local.ts` (packages/pipeline) | Real Remotion: preview 98 s, render 90 s for a 59.8 s video; QC pass (1920×1080, 30 fps, h264/aac, peak −15 dBFS, no clipping) |
+| `node --import tsx scripts/render-fixtures.ts tech5min` (packages/render) | 5-minute fixture: 312.4 s video rendered in 448 s locally (~1.4× real time); QC pass (1920×1080, 30 fps, h264/aac, RMS −22.5 dBFS, peak −15 dBFS, 0 clipped samples). Linux worker timing/memory still TO MEASURE (V-08) |
 | Manual browser smoke (`pnpm db:local`, `pnpm dev:worker`, `pnpm dev:web`) | Sign-in → script (2 cr) → approve → storyboard (3 cr) → edit/template switch/undo autosaved → voice (5.46 cr) → edit one scene → re-voice only that scene (0.78 cr) → preview 640×360 plays (2.44 cr) → final render downloads as MP4 with range support (24.43 cr) → scene redesign kept narration + voice (1 cr) |
 | Admin grant and logo upload from the automation browser | Not run manually (blocked by tool policy); covered by the Playwright suite instead |
 
