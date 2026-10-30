@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
+import { connection } from 'next/server';
 import { Logo } from '@/components/SiteChrome';
 import { getSession } from '@/lib/auth';
 import { env } from '@/lib/env';
@@ -9,6 +10,7 @@ export const metadata: Metadata = { title: 'Choose a new password' };
 
 /** Reached from the password-reset email via /auth/callback, which signs the user in first. */
 export default async function ResetPasswordPage() {
+  await connection();
   const e = env();
   if (e.AUTH_DRIVER !== 'supabase') redirect('/studio');
   const session = await getSession();
