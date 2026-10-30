@@ -1,6 +1,51 @@
 import 'server-only';
 import { z } from 'zod';
 
+const emptyToUndef = (value: string | undefined) => {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+};
+
+/**
+ * Next.js / Vercel only copies env vars that appear as `process.env.NAME` in the server bundle.
+ * Parsing `process.env` as a whole object drops DATABASE_URL and the rest at runtime.
+ */
+function readEnv() {
+  return {
+    APP_ENV: emptyToUndef(process.env.APP_ENV),
+    APP_BASE_URL: emptyToUndef(process.env.APP_BASE_URL),
+    ALLOWED_ORIGINS: emptyToUndef(process.env.ALLOWED_ORIGINS),
+    ADMIN_EMAILS: emptyToUndef(process.env.ADMIN_EMAILS),
+    AUTH_DRIVER: emptyToUndef(process.env.AUTH_DRIVER),
+    DEV_AUTH_SECRET: emptyToUndef(process.env.DEV_AUTH_SECRET),
+    NEXT_PUBLIC_SUPABASE_URL: emptyToUndef(process.env.NEXT_PUBLIC_SUPABASE_URL) ?? emptyToUndef(process.env.SUPABASE_URL),
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: emptyToUndef(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) ?? emptyToUndef(process.env.SUPABASE_ANON_KEY),
+    DATABASE_URL: emptyToUndef(process.env.DATABASE_URL) ?? emptyToUndef(process.env.POSTGRES_URL),
+    DATABASE_SSL: emptyToUndef(process.env.DATABASE_SSL),
+    DATABASE_CA_CERT: emptyToUndef(process.env.DATABASE_CA_CERT),
+    QUEUE_DRIVER: emptyToUndef(process.env.QUEUE_DRIVER),
+    REDIS_URL: emptyToUndef(process.env.REDIS_URL),
+    STORAGE_DRIVER: emptyToUndef(process.env.STORAGE_DRIVER),
+    LOCAL_STORAGE_ROOT: emptyToUndef(process.env.LOCAL_STORAGE_ROOT),
+    LOCAL_STORAGE_SECRET: emptyToUndef(process.env.LOCAL_STORAGE_SECRET),
+    S3_ENDPOINT: emptyToUndef(process.env.S3_ENDPOINT),
+    S3_REGION: emptyToUndef(process.env.S3_REGION),
+    S3_BUCKET: emptyToUndef(process.env.S3_BUCKET),
+    S3_ACCESS_KEY_ID: emptyToUndef(process.env.S3_ACCESS_KEY_ID),
+    S3_SECRET_ACCESS_KEY: emptyToUndef(process.env.S3_SECRET_ACCESS_KEY),
+    SIGNED_URL_TTL_SECONDS: emptyToUndef(process.env.SIGNED_URL_TTL_SECONDS),
+    AI_PROVIDER_MODE: emptyToUndef(process.env.AI_PROVIDER_MODE),
+    ELEVENLABS_VOICE_IDS: emptyToUndef(process.env.ELEVENLABS_VOICE_IDS),
+    MAX_ACTIVE_JOBS_PER_WORKSPACE: emptyToUndef(process.env.MAX_ACTIVE_JOBS_PER_WORKSPACE),
+    GOOGLE_OAUTH_CLIENT_ID: emptyToUndef(process.env.GOOGLE_OAUTH_CLIENT_ID),
+    GOOGLE_OAUTH_CLIENT_SECRET: emptyToUndef(process.env.GOOGLE_OAUTH_CLIENT_SECRET),
+    TOKEN_ENCRYPTION_KEY: emptyToUndef(process.env.TOKEN_ENCRYPTION_KEY),
+    PAYMENTS_ENABLED: emptyToUndef(process.env.PAYMENTS_ENABLED),
+    PAYSTACK_SECRET_KEY: emptyToUndef(process.env.PAYSTACK_SECRET_KEY),
+    PAYSTACK_CURRENCY: emptyToUndef(process.env.PAYSTACK_CURRENCY),
+  };
+}
+
 const ServerEnvSchema = z
   .object({
     APP_ENV: z.enum(['local', 'staging', 'production']).default('local'),
@@ -52,7 +97,7 @@ export type ServerEnv = z.infer<typeof ServerEnvSchema>;
 let cached: ServerEnv | null = null;
 
 export function envIssues(): string | null {
-  const parsed = ServerEnvSchema.safeParse(process.env);
+  const parsed = ServerEnvSchema.safeParse(readEnv());
   if (parsed.success) return null;
   return parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
 }
@@ -62,7 +107,7 @@ export function env(): ServerEnv {
   if (cached) return cached;
   const issues = envIssues();
   if (issues) throw new Error(`Invalid web environment: ${issues}`);
-  cached = ServerEnvSchema.parse(process.env);
+  cached = ServerEnvSchema.parse(readEnv());
   return cached;
 }
 
