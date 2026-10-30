@@ -3,8 +3,14 @@
 Minkflow already contains the full Supabase integration (auth, schema, RLS, signup trigger). Connecting a project is
 configuration only. Do staging first; repeat for production with its own project.
 
-Sign-in is passwordless: the user enters an email, receives one email containing **both** a link and a 6-digit code,
-and either clicks the link or types the code. New emails get an account, a workspace and 60 trial credits automatically.
+Sign-in options on `/login`:
+
+- **Email + password** (Sign in / Create account tabs). New accounts confirm their email with a link or 6-digit code.
+- **Continue with Google** — the button appears automatically once Google is enabled in Supabase (section 4b).
+- **Forgot password?** — reset email (link or code) → `/auth/reset-password` to choose a new password.
+- **Email me a sign-in code instead** — passwordless fallback.
+
+Every new account gets a workspace and 60 trial credits automatically (database trigger), whichever method created it.
 
 ## 1. Create the project (dashboard)
 
@@ -63,20 +69,45 @@ the root certificate (Database Settings → SSL Configuration), set `DATABASE_SS
 - Site URL: your `APP_BASE_URL` (e.g. `http://localhost:3000` while testing locally, the Vercel URL on staging).
 - Redirect URLs: add `<APP_BASE_URL>/auth/callback` for every environment that signs in (local and staging can share a staging project).
 
-**Authentication → Sign In / Providers → Email**: enabled. Leave "Confirm email" on.
+**Authentication → Sign In / Providers → Email**: enabled. Leave "Confirm email" on. Set the minimum password
+length to 8 (the form asks for 8; Supabase's default is 6).
 
-**Authentication → Emails → Templates**: replace the body of **Magic Link** and **Confirm signup** with the
-following so the link works on any device and the code is included:
+**Authentication → Emails → Templates**: replace the bodies below so links work on any device and include a code.
+Without this the default templates still work, but links only succeed in the browser that requested them and no
+code is shown.
+
+*Confirm signup* and *Magic Link* (same body for both):
 
 ```html
 <h2>Your Minkflow sign-in</h2>
-<p><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email&next=/studio">Sign in to Minkflow</a></p>
+<p><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email&next=/studio">Continue to Minkflow</a></p>
 <p>Or enter this code: <strong>{{ .Token }}</strong></p>
 <p>This link and code expire in one hour. If you did not request this, ignore this email.</p>
 ```
 
-Without this change the default templates still work, but the link only succeeds in the same browser that requested
-it, and no code is shown.
+*Reset Password*:
+
+```html
+<h2>Reset your Minkflow password</h2>
+<p><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery&next=/auth/reset-password">Choose a new password</a></p>
+<p>Or enter this code: <strong>{{ .Token }}</strong></p>
+<p>This link and code expire in one hour. If you did not request this, ignore this email.</p>
+```
+
+### 4b. Google sign-in (optional; the button stays hidden until this is done)
+
+1. console.cloud.google.com → create (or pick) a project → **APIs & Services → OAuth consent screen**: app name
+   Minkflow, your support email, audience External. Add scopes `openid`, `email`, `profile`.
+2. **APIs & Services → Credentials → Create credentials → OAuth client ID** → type *Web application*.
+   - Authorized JavaScript origins: `<APP_BASE_URL>` (e.g. `http://localhost:3000`).
+   - Authorized redirect URIs: `https://<project-ref>.supabase.co/auth/v1/callback` (Supabase shows this exact URL
+     on its Google provider page).
+3. Copy the **Client ID** and **Client secret** into Supabase → **Authentication → Sign In / Providers → Google**,
+   enable it, save.
+4. Within five minutes the "Continue with Google" button appears on `/login`. Google users land on
+   `/auth/callback` and get the same workspace + 60 credits.
+
+The client secret goes only into the Supabase dashboard; Minkflow itself never sees it.
 
 **Email delivery (required before inviting anyone else):** Supabase's built-in sender is only for testing — it is
 heavily rate limited and only delivers to members of your Supabase organisation (V-23). Set up custom SMTP under

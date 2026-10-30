@@ -23,7 +23,7 @@ export function SiteHeader() {
           <Link href="/login" className="btn ghost">
             Sign in
           </Link>
-          <Link href="/login" className="btn primary">
+          <Link href="/login?mode=signup" className="btn primary">
             Start free
           </Link>
         </nav>

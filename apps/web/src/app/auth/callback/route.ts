@@ -3,11 +3,11 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { supabaseServer } from '@/lib/auth';
 import { env } from '@/lib/env';
 
-const LINK_TYPES = new Set<EmailOtpType>(['email', 'magiclink', 'signup', 'invite', 'email_change']);
+const LINK_TYPES = new Set<EmailOtpType>(['email', 'magiclink', 'signup', 'invite', 'email_change', 'recovery']);
 
 /**
- * Supabase email-link return. Accepts both the PKCE `?code=` redirect (default email templates; must be opened in
- * the browser that requested it) and `?token_hash=&type=` (templates in docs/SUPABASE-SETUP.md; works on any device).
+ * Supabase email-link and Google OAuth return. Accepts the PKCE `?code=` redirect (OAuth, and default email
+ * templates opened in the requesting browser) and `?token_hash=&type=` (templates in docs/SUPABASE-SETUP.md; any device).
  */
 export async function GET(req: NextRequest) {
   const params = req.nextUrl.searchParams;

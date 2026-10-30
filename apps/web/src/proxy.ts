@@ -29,5 +29,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/studio/:path*', '/login'],
+  matcher: ['/studio/:path*', '/login', '/auth/reset-password'],
 };

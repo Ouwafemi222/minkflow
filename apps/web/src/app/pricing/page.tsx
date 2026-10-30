@@ -23,7 +23,7 @@ export default function PricingPage() {
               <div style={{ fontSize: 36, fontWeight: 800 }}>{usd(pack.usdCents)}</div>
               <div className="muted">{pack.credits.toLocaleString()} credits</div>
               <div className="small muted">≈ {Math.floor(pack.credits / sixtySecondVideo)} one-minute videos</div>
-              <Link href="/login" className="btn primary">
+              <Link href="/login?mode=signup" className="btn primary">
                 Get started
               </Link>
             </div>

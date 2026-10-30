@@ -25,7 +25,7 @@ export default function HomePage() {
         <h1>Turn any idea into a narrated, animated explainer video</h1>
         <p>{brand.description} Script, storyboard, voice and captions — all editable, in one place.</p>
         <div className="row" style={{ justifyContent: 'center' }}>
-          <Link href="/login" className="btn primary">
+          <Link href="/login?mode=signup" className="btn primary">
             Create your first video
           </Link>
           <Link href="/pricing" className="btn">
