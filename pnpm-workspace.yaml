@@ -1,0 +1,9 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+  - "@remotion/compositor-win32-x64-msvc"
+  - "@remotion/compositor-linux-x64-gnu"

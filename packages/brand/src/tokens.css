@@ -1,0 +1,60 @@
+/* Minkflow semantic design tokens (V4 approved palette). Do not hardcode colors in components. */
+:root {
+  --brand-primary: #635bff;
+  --brand-primary-strong: #4b44e0;
+  --brand-primary-hover: #554ef0;
+  --brand-primary-pressed: #4840d6;
+  --brand-midnight: #0b1020;
+  --brand-ice: #f7f9fc;
+  --brand-cyan: #23d5e8;
+
+  --surface-page: #f7f9fc;
+  --surface-card: #ffffff;
+  --surface-muted: #eef1f7;
+  --surface-inset: #e4e8f1;
+  --border-default: #d9deea;
+  --text-primary: #0b1020;
+  --text-secondary: #475069;
+  --text-muted: #5f6880;
+  --text-on-primary: #ffffff;
+  --text-link: #4b44e0;
+
+  --focus-ring: #635bff;
+  --state-success: #0f7b4a;
+  --state-success-bg: #e3f6ec;
+  --state-warning: #8a5a00;
+  --state-warning-bg: #fff4dc;
+  --state-error: #c0262d;
+  --state-error-bg: #fde8e9;
+  --state-info: #4b44e0;
+  --state-info-bg: #ecebff;
+  --disabled-bg: #e4e8f1;
+  --disabled-text: #8a92a8;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+}
+
+[data-studio-theme='dark'] {
+  --surface-page: #0b1020;
+  --surface-card: #171e32;
+  --surface-muted: #1f2840;
+  --surface-inset: #121829;
+  --border-default: #2c3550;
+  --text-primary: #ffffff;
+  --text-secondary: #c3c9da;
+  --text-muted: #9aa3bb;
+  --text-link: #a9a4ff;
+  --focus-ring: #23d5e8;
+  --state-success: #4ade9a;
+  --state-success-bg: #10291f;
+  --state-warning: #fbbf4d;
+  --state-warning-bg: #2d2412;
+  --state-error: #ff7a80;
+  --state-error-bg: #33161a;
+  --state-info: #a9a4ff;
+  --state-info-bg: #1e1d45;
+  --disabled-bg: #1f2840;
+  --disabled-text: #6b7490;
+}
