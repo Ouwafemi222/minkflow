@@ -109,6 +109,23 @@ code is shown.
 
 The client secret goes only into the Supabase dashboard; Minkflow itself never sees it.
 
+### 4c. "Connect your YouTube" (optional; the button explains it is unavailable until this is done)
+
+Reuses the same Google Cloud project and OAuth client as 4b.
+
+1. **APIs & Services → Library** → enable **YouTube Data API v3**.
+2. **OAuth consent screen → Data access / Scopes** → add `https://www.googleapis.com/auth/youtube.readonly`.
+   While the app is in *Testing* status, add each tester's Google account under **Test users** (max 100). Public
+   launch needs Google's verification of this sensitive scope (V-24).
+3. **Credentials → your OAuth client → Authorized redirect URIs** → add `<APP_BASE_URL>/api/youtube/callback`
+   (e.g. `http://localhost:3000/api/youtube/callback`), alongside the Supabase one from 4b.
+4. In `.env.local` (and Vercel): `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, and `TOKEN_ENCRYPTION_KEY`
+   (`pnpm gen:secret`; keep it stable — changing it makes stored connections unusable until users reconnect).
+5. Restart `pnpm dev:web`. Studio → sidebar **Connect your YouTube** → Account page → **Connect your YouTube**.
+
+Refresh tokens are stored AES-256-GCM encrypted; the database never holds them in plain text and signed-in users
+cannot read the column. Disconnecting deletes the row and revokes the token at Google.
+
 **Email delivery (required before inviting anyone else):** Supabase's built-in sender is only for testing — it is
 heavily rate limited and only delivers to members of your Supabase organisation (V-23). Set up custom SMTP under
 Authentication → Emails → SMTP Settings (Resend: host `smtp.resend.com`, port 465, user `resend`, password = Resend

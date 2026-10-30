@@ -130,6 +130,45 @@ export default async function AdminPage() {
           </table>
         </div>
       </section>
+
+      <section className="stack" aria-labelledby="deletions">
+        <h2 id="deletions" style={{ margin: 0 }}>
+          Account deletion requests
+        </h2>
+        <p className="small muted" style={{ margin: 0 }}>
+          Complete within 30 days of the request. Steps: docs/RUNBOOKS.md, &quot;Account deletion&quot;.
+        </p>
+        <div className="card">
+          {o.deletionRequests.length ? (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th scope="col">Requested</th>
+                  <th scope="col">Email</th>
+                  <th scope="col">Name</th>
+                  <th scope="col">User ID</th>
+                </tr>
+              </thead>
+              <tbody>
+                {o.deletionRequests.map((r) => (
+                  <tr key={r.id}>
+                    <td>{date(r.deletion_requested_at)}</td>
+                    <td>{r.email}</td>
+                    <td>{r.display_name}</td>
+                    <td>
+                      <code>{r.id}</code>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="muted" style={{ margin: 0 }}>
+              No pending requests.
+            </p>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

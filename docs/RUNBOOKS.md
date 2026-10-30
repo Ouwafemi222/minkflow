@@ -111,6 +111,23 @@ Run before the beta and then monthly. Record date, duration and result in `docs/
   `select public.grant_credits('<workspace_id>', -<microcredits>, 'adjustment', 'refund', '<paystack_ref>', 'refund:<paystack_ref>');`
   and add an `audit_events` row describing who approved it.
 
+## Account deletion
+
+Requests appear on `/studio/admin` → "Account deletion requests" (users can cancel by signing back in). Complete
+within 30 days. A one-step purge is **not built yet** (V-25: it needs a decision on how long ledger/payment rows are
+kept). Do **not** delete the user from Supabase → Authentication → Users: the cascade fails on the append-only
+credit ledger. Interim manual procedure in the SQL Editor, for `<user id>` from the admin table:
+
+1. `select id from public.workspaces where owner_id = '<user id>';` → `<ws>`.
+2. Delete the files under `ws/<ws>/` in the R2 bucket (dashboard or `rclone purge`).
+3. `delete from public.youtube_connections where workspace_id = '<ws>';` (also ask the user to remove Minkflow at
+   myaccount.google.com/permissions, since the stored token cannot be decrypted in SQL).
+4. `update public.projects set deleted_at = now() where workspace_id = '<ws>';` and
+   `update public.assets set deleted_at = now() where workspace_id = '<ws>';`
+5. `update public.profiles set display_name = null, avatar_mode = 'none', avatar_asset_id = null where id = '<user id>';`
+6. `update public.workspaces set suspended_at = now() where id = '<ws>';` then ban the user in Supabase → Users.
+7. Record what you did with `insert into public.audit_events (workspace_id, action) values ('<ws>', 'account.deleted_manually');`
+
 ## Secret rotation
 
 Rotate in the provider dashboard, update Vercel/Railway variables, redeploy both services, then revoke the old

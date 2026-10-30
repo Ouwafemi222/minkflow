@@ -45,6 +45,13 @@ try {
   );
   check(anonGrants.rows.length === 0, 'Anonymous API role has no table access', anonGrants.rows.length ? JSON.stringify(anonGrants.rows) : '');
 
+  const ownFunctions = new Set(migrationFiles().flatMap((m) => [...m.sql.matchAll(/create (?:or replace )?function public\.(\w+)/gi)].map((x) => x[1]!.toLowerCase())));
+  const anonFns = await db.query<{ routine_name: string }>(
+    `select distinct routine_name from information_schema.role_routine_grants where routine_schema = 'public' and grantee in ('anon', 'PUBLIC')`,
+  );
+  const exposed = anonFns.rows.map((r) => r.routine_name).filter((n) => ownFunctions.has(n.toLowerCase()));
+  check(exposed.length === 0, 'Anonymous API role cannot call Minkflow functions', exposed.join(', '));
+
   // V-15: the app connects as the database owner and switches to `authenticated` per request.
   const probeUser = randomUUID();
   await db

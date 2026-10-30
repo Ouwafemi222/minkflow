@@ -28,6 +28,9 @@ const ServerEnvSchema = z
     AI_PROVIDER_MODE: z.enum(['mock', 'live']).default('mock'),
     ELEVENLABS_VOICE_IDS: z.string().optional(),
     MAX_ACTIVE_JOBS_PER_WORKSPACE: z.coerce.number().int().min(1).max(20).default(3),
+    GOOGLE_OAUTH_CLIENT_ID: z.string().default(''),
+    GOOGLE_OAUTH_CLIENT_SECRET: z.string().default(''),
+    TOKEN_ENCRYPTION_KEY: z.string().default(''),
     PAYMENTS_ENABLED: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
     PAYSTACK_SECRET_KEY: z.string().optional(),
     PAYSTACK_CURRENCY: z.literal('USD').default('USD'),
@@ -40,6 +43,8 @@ const ServerEnvSchema = z
     if (env.DATABASE_SSL === 'verify' && !env.DATABASE_CA_CERT) ctx.addIssue({ code: 'custom', path: ['DATABASE_CA_CERT'], message: 'required when DATABASE_SSL=verify' });
     if (env.STORAGE_DRIVER === 'local' && env.APP_ENV !== 'local') ctx.addIssue({ code: 'custom', path: ['STORAGE_DRIVER'], message: 'local storage is for local development only' });
     if (env.STORAGE_DRIVER === 'local' && env.LOCAL_STORAGE_SECRET.length < 16) ctx.addIssue({ code: 'custom', path: ['LOCAL_STORAGE_SECRET'], message: 'set a random 16+ char secret' });
+    if (Boolean(env.GOOGLE_OAUTH_CLIENT_ID) !== Boolean(env.GOOGLE_OAUTH_CLIENT_SECRET)) ctx.addIssue({ code: 'custom', path: ['GOOGLE_OAUTH_CLIENT_SECRET'], message: 'set both GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET, or neither' });
+    if (env.GOOGLE_OAUTH_CLIENT_ID && Buffer.from(env.TOKEN_ENCRYPTION_KEY, 'base64').length !== 32) ctx.addIssue({ code: 'custom', path: ['TOKEN_ENCRYPTION_KEY'], message: 'required for YouTube: 32 random bytes, base64 (pnpm gen:secret)' });
     if (env.PAYMENTS_ENABLED && !env.PAYSTACK_SECRET_KEY) ctx.addIssue({ code: 'custom', path: ['PAYSTACK_SECRET_KEY'], message: 'required when PAYMENTS_ENABLED=true' });
   });
 export type ServerEnv = z.infer<typeof ServerEnvSchema>;

@@ -113,7 +113,7 @@ test('admin grants beta credits (audited, idempotent)', async ({ browser }) => {
 
   const admin = await browser.newPage();
   await signIn(admin, 'admin@e2e.test');
-  await admin.getByRole('link', { name: 'Admin' }).click();
+  await admin.getByRole('link', { name: 'Admin', exact: true }).click();
   await admin.getByLabel('User email').fill('beta@e2e.test');
   await admin.getByLabel('Credits', { exact: true }).fill('25');
   await admin.getByLabel('Reason (audited)').fill('E2E beta grant');
@@ -122,4 +122,34 @@ test('admin grants beta credits (audited, idempotent)', async ({ browser }) => {
 
   await user.goto('/studio/billing');
   await expect(user.getByText('Balance: 85 credits')).toBeVisible();
+});
+
+test('account: rename, photo upload/remove, YouTube card, deletion request and cancel', async ({ page }) => {
+  await signIn(page, 'profile@e2e.test');
+  const sidebar = page.getByRole('complementary', { name: 'Studio' });
+  await expect(sidebar.getByRole('link', { name: /Connect your YouTube/ })).toBeVisible();
+
+  await sidebar.locator('a.account-link').click();
+  await expect(page.getByRole('heading', { name: 'Account', level: 1 })).toBeVisible();
+  await expect(page.getByText('YouTube connections are not switched on for this site yet.')).toBeVisible();
+
+  await page.getByLabel('Display name').fill('Pat Creator');
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.getByText('Name saved.')).toBeVisible();
+  await expect(sidebar.getByText('Pat Creator')).toBeVisible();
+
+  await page.getByLabel('Upload profile photo').setInputFiles({ name: 'me.png', mimeType: 'image/png', buffer: tinyPng() });
+  await expect(page.getByText('Photo updated.')).toBeVisible();
+  await expect(sidebar.locator('img.avatar')).toBeVisible();
+  await page.getByRole('button', { name: 'Remove photo' }).click();
+  await expect(page.getByText('Photo removed.')).toBeVisible();
+  await expect(sidebar.locator('img.avatar')).toHaveCount(0);
+
+  await page.getByLabel(/Type profile@e2e\.test to confirm/).fill('profile@e2e.test');
+  await page.getByRole('button', { name: 'Delete my account' }).click();
+  await expect(page).toHaveURL(/account=deletion-requested/);
+  await signIn(page, 'profile@e2e.test');
+  await expect(page.getByText(/scheduled for deletion/)).toBeVisible();
+  await page.getByRole('button', { name: 'Keep my account' }).click();
+  await expect(page.getByText(/scheduled for deletion/)).toHaveCount(0);
 });

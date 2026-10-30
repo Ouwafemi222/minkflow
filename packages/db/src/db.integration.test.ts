@@ -92,6 +92,8 @@ describe('RLS cross-tenant isolation', () => {
       'authenticated:cancel_job',
       'authenticated:commit_revision',
       'authenticated:my_workspace_ids',
+      'authenticated:set_account_deletion',
+      'authenticated:update_my_profile',
       'authenticated:workspace_balance',
     ]);
   });
@@ -103,6 +105,57 @@ describe('RLS cross-tenant isolation', () => {
   it('denies canceling another tenant job', async () => {
     const { job } = await repo.createJob(db, { workspaceId: bob.workspaceId, projectId: bob.projectId, revisionId: null, type: 'noop', idempotencyKey: 'bob-cancel', input: {}, credits: 0, maxActive: 10 });
     await expect(withUser(db, alice.userId, (tx) => repo.cancelJob(tx, job.id))).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+});
+
+describe('profiles', () => {
+  const image = (workspaceId: string, name: string) =>
+    repo.insertAsset(db, { workspaceId, projectId: null, kind: 'upload', storageKey: `ws/${workspaceId}/uploads/${name}.png`, mime: 'image/png', size: 10, sha256: name });
+
+  it('lets a user rename themselves and pick their own uploaded photo', async () => {
+    const photo = await image(alice.workspaceId, 'alice-photo');
+    const profile = await withUser(db, alice.userId, (tx) => repo.updateMyProfile(tx, { displayName: '  Alice A  ', avatarMode: 'upload', avatarAssetId: photo.id }));
+    expect(profile).toMatchObject({ display_name: 'Alice A', avatar_mode: 'upload', avatar_asset_id: photo.id });
+    const cleared = await withUser(db, alice.userId, (tx) => repo.updateMyProfile(tx, { avatarMode: 'none' }));
+    expect(cleared).toMatchObject({ display_name: 'Alice A', avatar_mode: 'none', avatar_asset_id: null });
+  });
+
+  it("refuses another tenant's asset, invalid values and direct column writes", async () => {
+    const bobPhoto = await image(bob.workspaceId, 'bob-photo');
+    await expect(withUser(db, alice.userId, (tx) => repo.updateMyProfile(tx, { avatarMode: 'upload', avatarAssetId: bobPhoto.id }))).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await expect(withUser(db, alice.userId, (tx) => repo.updateMyProfile(tx, { displayName: '   ' }))).rejects.toMatchObject({ code: 'VALIDATION_FAILED' });
+    await expect(withUser(db, alice.userId, (tx) => tx.query(`update public.profiles set avatar_asset_id = $1`, [bobPhoto.id]))).rejects.toThrow();
+  });
+
+  it('records and cancels an account deletion request', async () => {
+    const at = await withUser(db, alice.userId, (tx) => repo.setAccountDeletion(tx, true));
+    expect(at).toBeInstanceOf(Date);
+    expect((await repo.listDeletionRequests(db)).map((r) => r.email)).toContain('alice@example.com');
+    expect(await withUser(db, alice.userId, (tx) => repo.setAccountDeletion(tx, false))).toBeNull();
+    expect((await repo.listDeletionRequests(db)).map((r) => r.email)).not.toContain('alice@example.com');
+  });
+
+  it('uses the Google full name for new OAuth sign-ups', async () => {
+    const { rows } = await db.query<{ id: string }>(`insert into auth.users (email, raw_user_meta_data) values ('gina@example.com', '{"full_name":"Gina Google","avatar_url":"https://example.test/a.png"}') returning id`);
+    const profile = await withUser(db, rows[0]!.id, repo.getMyProfile);
+    expect(profile.display_name).toBe('Gina Google');
+    expect(await withUser(db, rows[0]!.id, async (tx) => repo.getBalance(tx, (await repo.getMyWorkspace(tx)).id))).toBe(60_000_000);
+  });
+});
+
+describe('youtube connections', () => {
+  it('stores one channel per workspace, readable by its owner only, token column hidden', async () => {
+    const input = { workspaceId: alice.workspaceId, userId: alice.userId, channelId: 'UC123', channelTitle: 'Alice Explains', channelThumbnailUrl: null, scopes: ['youtube.readonly'], refreshTokenCiphertext: 'v1.cipher' };
+    await repo.upsertYoutubeConnection(db, input);
+    await repo.upsertYoutubeConnection(db, { ...input, channelTitle: 'Alice Explains Again' });
+    const mine = await withUser(db, alice.userId, repo.getYoutubeConnection);
+    expect(mine).toMatchObject({ channel_id: 'UC123', channel_title: 'Alice Explains Again', scopes: ['youtube.readonly'] });
+    expect(JSON.stringify(mine)).not.toContain('cipher');
+    expect(await withUser(db, bob.userId, repo.getYoutubeConnection)).toBeNull();
+    await expect(withUser(db, alice.userId, (tx) => tx.query('select refresh_token_ciphertext from public.youtube_connections'))).rejects.toThrow();
+    await expect(withUser(db, alice.userId, (tx) => tx.query(`update public.youtube_connections set channel_title = 'x'`))).rejects.toThrow();
+    expect(await repo.deleteYoutubeConnection(db, alice.workspaceId)).toBe('v1.cipher');
+    expect(await withUser(db, alice.userId, repo.getYoutubeConnection)).toBeNull();
   });
 });
 

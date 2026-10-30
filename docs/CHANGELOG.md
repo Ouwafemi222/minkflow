@@ -2,6 +2,20 @@
 
 Documentation version history is preserved in `CHANGELOG-V2.md`, `CHANGELOG-V3.md`, `CHANGELOG-V4.md`.
 
+## Account page, profile photos and YouTube connection (2026-10-30)
+
+- Migration `20261030000003_profiles_youtube` (applied to the project's Supabase via `pnpm db:migrate`): profile
+  `avatar_mode` (`auto` = Google photo, `upload`, `none`), account-deletion requests, `youtube_connections` table whose
+  encrypted refresh token is not readable by the `authenticated` role. Signup trigger also reads Google `full_name`/`name`.
+- `/studio/account`: edit display name, upload/remove photo or use the Google photo, sign-in methods, YouTube card,
+  account-deletion request (processed manually, `docs/RUNBOOKS.md`; automation is V-25). Sidebar footer shows avatar and name.
+- Sidebar: "Connect your YouTube" under the three studio tabs (shows the channel once connected).
+- YouTube OAuth (ADR-020): `youtube.readonly` scope, state cookie bound to the user, refresh token AES-256-GCM encrypted
+  with `TOKEN_ENCRYPTION_KEY`, revoked at Google on disconnect. Needs `GOOGLE_OAUTH_CLIENT_ID/SECRET`; real Google
+  test is V-24. Publishing/upload is not built yet.
+- Commands run: `pnpm typecheck` (11/11), `pnpm test` (all pass; db 26, shared 10, web 7), Playwright 8/8 (new account
+  test), `pnpm verify:supabase` against the project (all checks PASS, incl. new anon function-execute check).
+
 ## Supabase connection readiness (2026-10-30)
 
 No Supabase project is connected yet; everything below was exercised locally against PGlite.

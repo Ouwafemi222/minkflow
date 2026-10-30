@@ -9,6 +9,29 @@ export interface WorkspaceRow {
   created_at: Date;
 }
 
+export type AvatarMode = 'auto' | 'upload' | 'none';
+
+export interface ProfileRow {
+  id: string;
+  display_name: string | null;
+  avatar_mode: AvatarMode;
+  avatar_asset_id: string | null;
+  deletion_requested_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+/** Client-readable columns only; the refresh token never leaves the server-side repository functions. */
+export interface YoutubeConnectionRow {
+  workspace_id: string;
+  channel_id: string;
+  channel_title: string;
+  channel_thumbnail_url: string | null;
+  scopes: string[];
+  connected_at: Date;
+  updated_at: Date;
+}
+
 export interface ProjectRow {
   id: string;
   workspace_id: string;

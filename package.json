@@ -17,6 +17,7 @@
     "db:local": "pnpm --filter @minkflow/db db:local",
     "db:migrate": "pnpm --filter @minkflow/db db:migrate --",
     "verify:supabase": "pnpm --filter @minkflow/db verify:supabase",
+    "gen:secret": "node -e \"console.log(require('node:crypto').randomBytes(32).toString('base64'))\"",
     "dev:web": "pnpm --filter @minkflow/web dev",
     "dev:worker": "pnpm --filter @minkflow/worker dev",
     "e2e:local": "pnpm --filter @minkflow/pipeline e2e:local",

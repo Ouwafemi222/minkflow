@@ -1,5 +1,5 @@
 import 'server-only';
-import { spendSince } from '@minkflow/db';
+import { listDeletionRequests, spendSince } from '@minkflow/db';
 import { AppError } from '@minkflow/shared';
 import type { ApiContext } from './api';
 import { isAdminEmail } from './env';
@@ -38,5 +38,6 @@ export async function adminOverview() {
     topSpendToday: topSpend.rows,
     webhooks: webhooks.rows,
     workspaces: workspaces.rows[0]?.n ?? 0,
+    deletionRequests: await listDeletionRequests(q, 50),
   };
 }

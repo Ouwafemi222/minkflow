@@ -8,7 +8,16 @@ import { env } from './env';
 export interface Session {
   userId: string;
   email: string;
+  /** From the identity provider (e.g. Google `full_name`); the editable name lives in `profiles`. */
+  providerName?: string | null;
+  /** Provider photo URL (Google `avatar_url`/`picture`), used when the profile photo mode is `auto`. */
+  providerAvatarUrl?: string | null;
+  /** Sign-in methods linked to the account, e.g. `email`, `google`. */
+  providers?: string[];
 }
+
+const httpsUrl = (value: unknown): string | null => (typeof value === 'string' && /^https:\/\/\S+$/.test(value) && value.length <= 1000 ? value : null);
+const shortText = (value: unknown): string | null => (typeof value === 'string' && value.trim() ? value.trim().slice(0, 80) : null);
 
 export const DEV_COOKIE = 'mf_dev_session';
 const DEV_TTL_SECONDS = 7 * 24 * 3600;
@@ -57,7 +66,15 @@ export async function getSession(): Promise<Session | null> {
   const supabase = await supabaseServer();
   const { data } = await supabase.auth.getUser();
   if (!data.user) return null;
-  return { userId: data.user.id, email: data.user.email ?? '' };
+  const meta = (data.user.user_metadata ?? {}) as Record<string, unknown>;
+  const providers = data.user.app_metadata?.providers;
+  return {
+    userId: data.user.id,
+    email: data.user.email ?? '',
+    providerName: shortText(meta.full_name) ?? shortText(meta.name),
+    providerAvatarUrl: httpsUrl(meta.avatar_url) ?? httpsUrl(meta.picture),
+    providers: Array.isArray(providers) ? providers.filter((p): p is string => typeof p === 'string') : [],
+  };
 }
 
 export async function requireSession(): Promise<Session> {

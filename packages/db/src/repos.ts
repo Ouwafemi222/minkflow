@@ -1,7 +1,7 @@
 import { AppError } from '@minkflow/shared';
 import type { JobType, ProjectStatus } from '@minkflow/contracts';
 import { json, type Queryable } from './client';
-import type { AssetKind, AssetRow, JobRow, LedgerRow, PaymentRow, ProjectRow, RevisionRow, UsageRow, WorkspaceRow } from './types';
+import type { AssetKind, AssetRow, AvatarMode, JobRow, LedgerRow, PaymentRow, ProfileRow, ProjectRow, RevisionRow, UsageRow, WorkspaceRow, YoutubeConnectionRow } from './types';
 
 function one<T>(rows: T[], code: 'NOT_FOUND' = 'NOT_FOUND'): T {
   const row = rows[0];
@@ -339,6 +339,55 @@ export async function hasSuccessfulPayment(q: Queryable, workspaceId: string): P
 
 export async function listPayments(q: Queryable, limit = 20): Promise<PaymentRow[]> {
   return (await q.query<PaymentRow>('select * from public.payments order by created_at desc limit $1', [limit])).rows;
+}
+
+// ---------- Profile (user-scoped: run inside withUser) ----------
+export async function getMyProfile(tx: Queryable): Promise<ProfileRow> {
+  return one((await tx.query<ProfileRow>('select * from public.profiles where id = auth.uid()')).rows);
+}
+
+export async function updateMyProfile(tx: Queryable, p: { displayName?: string; avatarMode?: AvatarMode; avatarAssetId?: string | null }): Promise<ProfileRow> {
+  await tx.query('select public.update_my_profile($1, $2, $3)', [p.displayName ?? null, p.avatarMode ?? null, p.avatarAssetId ?? null]);
+  return getMyProfile(tx);
+}
+
+export async function setAccountDeletion(tx: Queryable, requested: boolean): Promise<Date | null> {
+  const { rows } = await tx.query<{ at: Date | null }>('select public.set_account_deletion($1) as at', [requested]);
+  return rows[0]?.at ?? null;
+}
+
+export async function listDeletionRequests(q: Queryable, limit = 50): Promise<Array<{ id: string; email: string | null; display_name: string | null; deletion_requested_at: Date }>> {
+  return (await q.query<{ id: string; email: string | null; display_name: string | null; deletion_requested_at: Date }>(
+    `select p.id, u.email, p.display_name, p.deletion_requested_at from public.profiles p join auth.users u on u.id = p.id
+     where p.deletion_requested_at is not null order by p.deletion_requested_at limit $1`, [limit])).rows;
+}
+
+// ---------- YouTube connections ----------
+const YOUTUBE_COLUMNS = 'workspace_id, channel_id, channel_title, channel_thumbnail_url, scopes, connected_at, updated_at';
+
+/** User-scoped read (RLS + column grants): never selects the token. */
+export async function getYoutubeConnection(tx: Queryable): Promise<YoutubeConnectionRow | null> {
+  return (await tx.query<YoutubeConnectionRow>(`select ${YOUTUBE_COLUMNS} from public.youtube_connections limit 1`)).rows[0] ?? null;
+}
+
+/** Service-side (owner connection): stores an already-encrypted refresh token for a verified workspace. */
+export async function upsertYoutubeConnection(q: Queryable, c: { workspaceId: string; userId: string; channelId: string; channelTitle: string; channelThumbnailUrl: string | null; scopes: string[]; refreshTokenCiphertext: string }): Promise<YoutubeConnectionRow> {
+  return one((await q.query<YoutubeConnectionRow>(
+    `insert into public.youtube_connections (workspace_id, connected_by, channel_id, channel_title, channel_thumbnail_url, scopes, refresh_token_ciphertext)
+     values ($1, $2, $3, $4, $5, $6, $7)
+     on conflict (workspace_id) do update set connected_by = excluded.connected_by, channel_id = excluded.channel_id,
+       channel_title = excluded.channel_title, channel_thumbnail_url = excluded.channel_thumbnail_url, scopes = excluded.scopes,
+       refresh_token_ciphertext = excluded.refresh_token_ciphertext, connected_at = now(), updated_at = now()
+     returning ${YOUTUBE_COLUMNS}`,
+    [c.workspaceId, c.userId, c.channelId, c.channelTitle, c.channelThumbnailUrl, c.scopes, c.refreshTokenCiphertext],
+  )).rows);
+}
+
+/** Service-side: removes the connection and returns the token ciphertext so the caller can revoke it at Google. */
+export async function deleteYoutubeConnection(q: Queryable, workspaceId: string): Promise<string | null> {
+  const { rows } = await q.query<{ refresh_token_ciphertext: string }>(
+    'delete from public.youtube_connections where workspace_id = $1 returning refresh_token_ciphertext', [workspaceId]);
+  return rows[0]?.refresh_token_ciphertext ?? null;
 }
 
 // ---------- Rate limiting + audit ----------
