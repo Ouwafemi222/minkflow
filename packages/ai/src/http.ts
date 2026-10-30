@@ -25,7 +25,13 @@ export async function postJson<T>(url: string, headers: Record<string, string>, 
         clearTimeout(timer);
       }
       const requestId = response.headers.get('x-request-id') ?? response.headers.get('request-id');
-      if (response.status === 429) throw new AppError('PROVIDER_RATE_LIMITED');
+      if (response.status === 429) {
+        const text = (await response.text()).slice(0, 300);
+        if (/insufficient_quota|credit_balance_exhausted|quota_exceeded/.test(text)) {
+          throw new AppError('PROVIDER_UNAVAILABLE', 'Provider account is out of credit or quota', { status: 429, reason: 'provider_quota_exhausted', body: text });
+        }
+        throw new AppError('PROVIDER_RATE_LIMITED');
+      }
       if (response.status >= 500) throw new AppError('PROVIDER_UNAVAILABLE', `Provider returned ${response.status}`);
       if (!response.ok) {
         const text = (await response.text()).slice(0, 300);
