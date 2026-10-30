@@ -5,8 +5,10 @@ import type { ReactNode } from 'react';
 export function Logo({ href = '/' }: { href?: string }) {
   return (
     <Link href={href} className="logo" aria-label={`${brand.name} home`}>
-      <span className="logo-mark" aria-hidden="true" />
-      {brand.name}
+      <img className="logo-mark" src="/brand/minkflow-mark.png" alt="" width={30} height={30} />
+      <span className="logo-word" aria-hidden="true">
+        mink<span className="logo-word-accent">flow</span>
+      </span>
     </Link>
   );
 }

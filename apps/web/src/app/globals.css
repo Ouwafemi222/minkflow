@@ -314,10 +314,22 @@ table.table th {
   gap: 8px;
 }
 .logo-mark {
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, var(--brand-primary), var(--brand-cyan));
+  width: 30px;
+  height: 30px;
+  display: block;
+}
+.logo-word {
+  font-family: Poppins, Inter, system-ui, sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.logo-word-accent {
+  background: linear-gradient(90deg, #4f46ff, var(--brand-cyan));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 .hero {
   padding: 72px 0 56px;

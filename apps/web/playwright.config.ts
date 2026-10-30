@@ -19,6 +19,8 @@ const stackEnv: Record<string, string> = {
   DEV_AUTH_SECRET: 'e2e-only-dev-auth-secret-0123456789',
   DATABASE_URL: `postgresql://postgres:postgres@127.0.0.1:${DB_PORT}/postgres`,
   DATABASE_SSL: 'disable',
+  GOOGLE_OAUTH_CLIENT_ID: '',
+  GOOGLE_OAUTH_CLIENT_SECRET: '',
   QUEUE_DRIVER: 'postgres',
   STORAGE_DRIVER: 'local',
   LOCAL_STORAGE_ROOT: '.data/e2e-storage',
