@@ -6,7 +6,7 @@ Owner: founder unless stated. Update `Checked on` + `Source` when verified.
 | ID | Item | Why it matters | Status | Owner | Checked on | Source |
 |---|---|---|---|---|---|---|
 | V-01 | Current OpenAI model names for script/storyboard and JSON-schema structured output support | Pinned in `OPENAI_MODEL_*` | TO VERIFY | engineering | — | platform.openai.com/docs |
-| V-02 | ElevenLabs "text-to-speech with timestamps" endpoint shape (`alignment.characters`, `character_start_times_seconds`) | Caption sync (ADR-005) | TO VERIFY (adapter written to documented shape; must be confirmed with live call) | engineering | — | elevenlabs.io/docs |
+| V-02 | ElevenLabs "text-to-speech with timestamps" endpoint shape (`alignment.characters`, `character_start_times_seconds`) | Caption sync (ADR-005) | VERIFIED 2026-10-30: live call (`eleven_multilingual_v2`, `mp3_44100_128`) returned `audio_base64` + `alignment` with equal-length `characters` / start / end arrays (also `normalized_alignment`, `quality_check`, unused) | engineering | 2026-10-30 | elevenlabs.io/docs |
 | V-03 | ElevenLabs plan permitting commercial use of generated audio; per-character price | Output rights, cost | TO VERIFY | founder | — | elevenlabs.io/pricing |
 | V-04 | Remotion Company License price, seat model, whether a runtime license key is needed | Legal to render for customers | TO VERIFY | founder | — | remotion.pro |
 | V-05 | Paystack USD settlement eligibility for founder's merchant entity; fees | Payments | TO VERIFY | founder | — | paystack.com/docs |
