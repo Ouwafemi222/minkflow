@@ -2,6 +2,23 @@
 
 Documentation version history is preserved in `CHANGELOG-V2.md`, `CHANGELOG-V3.md`, `CHANGELOG-V4.md`.
 
+## Supabase connection readiness (2026-10-30)
+
+No Supabase project is connected yet; everything below was exercised locally against PGlite.
+- Sign-in (Supabase mode): one email with a link **and** a 6-digit code (`verifyOtp`), resend with 60s cooldown;
+  `/auth/callback` accepts PKCE `?code=` and device-independent `?token_hash=&type=` links. Dev-mode banner now says
+  Supabase is not connected.
+- `pnpm db:migrate [--dry-run]`: applies `supabase/migrations` over `DATABASE_URL`/`MIGRATION_DATABASE_URL`, refuses
+  non-Supabase databases, records history in `supabase_migrations.schema_migrations` (V-22).
+- `pnpm verify:supabase`: read-only connection, migration, trigger, grant, role-switch (V-15) and Auth API checks.
+- `DATABASE_SSL` (`disable|require|verify`) + `DATABASE_CA_CERT` for web and worker; SSL required outside local.
+  node-postgres would otherwise turn `sslmode=require` into full verification and fail on Supabase's CA.
+- Local emulation now applies Supabase's default `public` grants; new test audits exact `anon`/`authenticated` privileges.
+- `LOCAL_DB_MIGRATE=emulation-only` for rehearsing `db:migrate`. New guide: `docs/SUPABASE-SETUP.md`.
+- Commands run: `pnpm typecheck` (11/11), `pnpm test` (all pass, incl. 4 new db and 3 new worker tests),
+  `pnpm db:migrate` dry-run/apply/re-run + `pnpm verify:supabase` against an emulation-only PGlite (all DB checks PASS;
+  Supabase URL/key checks FAIL as expected without a project), Playwright 7/7, `/login` baseline regenerated.
+
 ## M0 — Discovery, docs and render prototype (2026-10-30)
 - Initialized git; baseline commit of all founder docs unchanged.
 - Moved active docs to `docs/`; root `original-v1-preserved/` (byte-identical to the archived copy) moved to `archive/original-v1-preserved-root-copy/`. `archive/v2-original-unchanged/` untouched.

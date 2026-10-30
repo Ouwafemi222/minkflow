@@ -12,6 +12,8 @@ const ServerEnvSchema = z
     NEXT_PUBLIC_SUPABASE_URL: z.string().default(''),
     NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().default(''),
     DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
+    DATABASE_SSL: z.enum(['disable', 'require', 'verify']).default('disable'),
+    DATABASE_CA_CERT: z.string().optional(),
     QUEUE_DRIVER: z.enum(['postgres', 'bullmq']).default('postgres'),
     REDIS_URL: z.string().optional(),
     STORAGE_DRIVER: z.enum(['local', 's3']).default('local'),
@@ -34,6 +36,8 @@ const ServerEnvSchema = z
     if (env.AUTH_DRIVER === 'dev' && env.APP_ENV !== 'local') ctx.addIssue({ code: 'custom', path: ['AUTH_DRIVER'], message: 'dev auth is only allowed when APP_ENV=local' });
     if (env.AUTH_DRIVER === 'dev' && env.DEV_AUTH_SECRET.length < 16) ctx.addIssue({ code: 'custom', path: ['DEV_AUTH_SECRET'], message: 'set a random 16+ char secret' });
     if (env.AUTH_DRIVER === 'supabase' && (!env.NEXT_PUBLIC_SUPABASE_URL || !env.NEXT_PUBLIC_SUPABASE_ANON_KEY)) ctx.addIssue({ code: 'custom', path: ['NEXT_PUBLIC_SUPABASE_URL'], message: 'required for supabase auth' });
+    if (env.APP_ENV !== 'local' && env.DATABASE_SSL === 'disable') ctx.addIssue({ code: 'custom', path: ['DATABASE_SSL'], message: 'use require or verify outside local' });
+    if (env.DATABASE_SSL === 'verify' && !env.DATABASE_CA_CERT) ctx.addIssue({ code: 'custom', path: ['DATABASE_CA_CERT'], message: 'required when DATABASE_SSL=verify' });
     if (env.STORAGE_DRIVER === 'local' && env.APP_ENV !== 'local') ctx.addIssue({ code: 'custom', path: ['STORAGE_DRIVER'], message: 'local storage is for local development only' });
     if (env.STORAGE_DRIVER === 'local' && env.LOCAL_STORAGE_SECRET.length < 16) ctx.addIssue({ code: 'custom', path: ['LOCAL_STORAGE_SECRET'], message: 'set a random 16+ char secret' });
     if (env.PAYMENTS_ENABLED && !env.PAYSTACK_SECRET_KEY) ctx.addIssue({ code: 'custom', path: ['PAYSTACK_SECRET_KEY'], message: 'required when PAYMENTS_ENABLED=true' });

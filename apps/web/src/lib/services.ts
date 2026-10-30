@@ -11,7 +11,8 @@ g.__mf ??= {};
 const cache = g.__mf;
 
 export function db(): Db {
-  cache.db ??= createPgDb(env().DATABASE_URL, { max: 5 });
+  const e = env();
+  cache.db ??= createPgDb(e.DATABASE_URL, { max: 5, ssl: e.DATABASE_SSL, caCert: e.DATABASE_CA_CERT });
   return cache.db;
 }
 

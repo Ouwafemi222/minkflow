@@ -61,6 +61,41 @@ describe('RLS cross-tenant isolation', () => {
     await expect(withUser(db, alice.userId, (tx) => tx.query(`select public.create_job($1, null, null, 'noop', 'k', '{}'::jsonb, 0, 3, 3)`, [alice.workspaceId]))).rejects.toThrow();
   });
 
+  it('API roles hold exactly the intended privileges (guards against Supabase default grants)', async () => {
+    const tableGrants = await db.query<{ grantee: string; table_name: string; privilege_type: string }>(
+      `select grantee, table_name, privilege_type from information_schema.role_table_grants
+       where table_schema = 'public' and grantee in ('anon', 'authenticated') order by 1, 2, 3`,
+    );
+    expect(tableGrants.rows.filter((g) => g.grantee === 'anon')).toEqual([]);
+    const auth = tableGrants.rows.map((g) => `${g.table_name}:${g.privilege_type}`);
+    const readable = ['assets', 'credit_ledger', 'job_artifacts', 'jobs', 'payments', 'profiles', 'project_revisions', 'projects', 'scenes', 'usage_events', 'workspaces'];
+    expect(auth.filter((g) => !g.endsWith(':SELECT'))).toEqual([]);
+    expect(auth.map((g) => g.split(':')[0]).sort()).toEqual(readable);
+
+    const columnGrants = await db.query<{ table_name: string; column_name: string; privilege_type: string }>(
+      `select table_name, column_name, privilege_type from information_schema.column_privileges
+       where table_schema = 'public' and grantee = 'authenticated' and privilege_type <> 'SELECT' order by 1, 3, 2`,
+    );
+    expect(columnGrants.rows.map((c) => `${c.table_name}.${c.column_name}:${c.privilege_type}`)).toEqual([
+      'profiles.display_name:UPDATE',
+      'projects.title:INSERT',
+      'projects.workspace_id:INSERT',
+      'projects.deleted_at:UPDATE',
+      'projects.title:UPDATE',
+    ]);
+
+    const fnGrants = await db.query<{ routine_name: string; grantee: string }>(
+      `select routine_name, grantee from information_schema.role_routine_grants
+       where routine_schema = 'public' and grantee in ('anon', 'authenticated', 'PUBLIC') order by 2, 1`,
+    );
+    expect(fnGrants.rows.map((r) => `${r.grantee}:${r.routine_name}`)).toEqual([
+      'authenticated:cancel_job',
+      'authenticated:commit_revision',
+      'authenticated:my_workspace_ids',
+      'authenticated:workspace_balance',
+    ]);
+  });
+
   it('denies committing a revision to another tenant project', async () => {
     await expect(withUser(db, alice.userId, (tx) => repo.commitRevision(tx, { projectId: bob.projectId, expectedVersion: 0, input: {}, script: null, storyboard: null, brand: {}, scenes: null }, 'user'))).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });

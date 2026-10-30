@@ -1,10 +1,10 @@
 import { PGlite } from '@electric-sql/pglite';
-import { readdirSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { mapDbError, type Db, type Queryable } from './client';
+import { migrationFiles, SUPABASE_DIR } from './migrations';
 
-const SUPABASE_DIR = fileURLToPath(new URL('../../../supabase', import.meta.url));
+export { migrationFiles };
 
 function normalizeRow<T>(row: T): T {
   if (!row || typeof row !== 'object') return row;
@@ -37,17 +37,13 @@ export function pgliteDb(pglite: PGlite): Db {
   };
 }
 
-export function migrationFiles(): Array<{ name: string; sql: string }> {
-  const dir = join(SUPABASE_DIR, 'migrations');
-  return readdirSync(dir)
-    .filter((f) => f.endsWith('.sql'))
-    .sort()
-    .map((name) => ({ name, sql: readFileSync(join(dir, name), 'utf8') }));
+/** Applies the Supabase auth emulation (local only) and all pending migrations. */
+export async function applyAuthEmulation(pglite: PGlite): Promise<void> {
+  await pglite.exec(readFileSync(join(SUPABASE_DIR, 'dev', 'auth-emulation.sql'), 'utf8'));
 }
 
-/** Applies the Supabase auth emulation (local only) and all pending migrations. */
 export async function migrateLocal(pglite: PGlite): Promise<string[]> {
-  await pglite.exec(readFileSync(join(SUPABASE_DIR, 'dev', 'auth-emulation.sql'), 'utf8'));
+  await applyAuthEmulation(pglite);
   await pglite.exec('create table if not exists public._local_migrations (name text primary key, applied_at timestamptz not null default now())');
   const applied = new Set((await pglite.query<{ name: string }>('select name from public._local_migrations')).rows.map((r) => r.name));
   const ran: string[] = [];

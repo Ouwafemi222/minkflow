@@ -8,6 +8,8 @@ export const WorkerEnvSchema = z
     APP_ENV: z.enum(['local', 'staging', 'production']).default('local'),
     APP_BASE_URL: z.url(),
     DATABASE_URL: z.string().min(1),
+    DATABASE_SSL: z.enum(['disable', 'require', 'verify']).default('disable'),
+    DATABASE_CA_CERT: z.string().optional(),
     QUEUE_DRIVER: z.enum(['postgres', 'bullmq']).default('postgres'),
     REDIS_URL: z.string().optional(),
     STORAGE_DRIVER: z.enum(['local', 's3']).default('local'),
@@ -46,6 +48,8 @@ export const WorkerEnvSchema = z
     if (env.QUEUE_DRIVER === 'bullmq' && !env.REDIS_URL) ctx.addIssue({ code: 'custom', path: ['REDIS_URL'], message: 'required when QUEUE_DRIVER=bullmq' });
     if (env.STORAGE_DRIVER === 'local' && env.LOCAL_STORAGE_SECRET.length < 16) ctx.addIssue({ code: 'custom', path: ['LOCAL_STORAGE_SECRET'], message: 'set a random secret (16+ chars) for local storage' });
     if (env.APP_ENV !== 'local' && env.STORAGE_DRIVER === 'local') ctx.addIssue({ code: 'custom', path: ['STORAGE_DRIVER'], message: 'local storage is for local development only' });
+    if (env.APP_ENV !== 'local' && env.DATABASE_SSL === 'disable') ctx.addIssue({ code: 'custom', path: ['DATABASE_SSL'], message: 'use require or verify outside local' });
+    if (env.DATABASE_SSL === 'verify' && !env.DATABASE_CA_CERT) ctx.addIssue({ code: 'custom', path: ['DATABASE_CA_CERT'], message: 'required when DATABASE_SSL=verify' });
     if (env.APP_ENV !== 'local' && env.AI_PROVIDER_MODE === 'mock') ctx.addIssue({ code: 'custom', path: ['AI_PROVIDER_MODE'], message: 'mock providers are not allowed outside local' });
   });
 export type WorkerEnv = z.infer<typeof WorkerEnvSchema>;

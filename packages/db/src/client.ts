@@ -14,8 +14,32 @@ export interface Db extends Queryable {
 pg.types.setTypeParser(20, (v) => Number(v));
 pg.types.setTypeParser(1700, (v) => Number(v));
 
-export function createPgDb(connectionString: string, options: { max?: number } = {}): Db {
-  const pool = new pg.Pool({ connectionString, max: options.max ?? 5, idleTimeoutMillis: 30_000 });
+export type DbSslMode = 'disable' | 'require' | 'verify';
+
+export interface PgDbOptions {
+  max?: number;
+  /** `require` encrypts without certificate checks; `verify` checks against `caCert` (Supabase root CA PEM). */
+  ssl?: DbSslMode;
+  caCert?: string;
+}
+
+const SSL_URL_PARAMS = ['sslmode', 'sslrootcert', 'sslcert', 'sslkey', 'uselibpqcompat'];
+
+/**
+ * node-postgres treats `sslmode=require` in a URL as full verification, which fails against Supabase's own CA,
+ * so SSL is configured explicitly and any URL ssl params are dropped.
+ */
+export function pgConnectionConfig(connectionString: string, options: PgDbOptions = {}): pg.PoolConfig {
+  const mode = options.ssl ?? 'disable';
+  const url = new URL(connectionString);
+  for (const param of SSL_URL_PARAMS) url.searchParams.delete(param);
+  if (mode === 'verify' && !options.caCert) throw new Error('DATABASE_SSL=verify needs DATABASE_CA_CERT');
+  const ssl = mode === 'disable' ? false : mode === 'require' ? { rejectUnauthorized: false } : { rejectUnauthorized: true, ca: options.caCert };
+  return { connectionString: url.toString(), ssl };
+}
+
+export function createPgDb(connectionString: string, options: PgDbOptions = {}): Db {
+  const pool = new pg.Pool({ ...pgConnectionConfig(connectionString, options), max: options.max ?? 5, idleTimeoutMillis: 30_000 });
   return {
     query: async (text, params) => {
       try {

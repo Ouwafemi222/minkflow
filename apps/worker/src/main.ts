@@ -22,7 +22,11 @@ const workerId = env.WORKER_ID ?? `${hostname()}:${process.pid}`;
 const logger = createLogger({ svc: 'worker', workerId, env: env.APP_ENV }, env.LOG_LEVEL);
 if (env.SENTRY_DSN) Sentry.init({ dsn: env.SENTRY_DSN, environment: env.APP_ENV, tracesSampleRate: 0 });
 
-const db = createPgDb(env.DATABASE_URL, { max: env.AI_CONCURRENCY + env.RENDER_CONCURRENCY + 3 });
+const db = createPgDb(env.DATABASE_URL, {
+  max: env.AI_CONCURRENCY + env.RENDER_CONCURRENCY + 3,
+  ssl: env.DATABASE_SSL,
+  caCert: env.DATABASE_CA_CERT,
+});
 const { llm, tts } = createProvidersFromEnv(env);
 const deps: PipelineDeps = {
   db,

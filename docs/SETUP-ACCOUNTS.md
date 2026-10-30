@@ -42,7 +42,7 @@ or in your local, git-ignored `.env.local` files.
 
 ## 4. After accounts exist
 1. Locally: copy `.env.example` → `.env.local` at the repository root (web and worker both read it) and fill values. On Vercel/Railway, set the same names in each platform's environment settings.
-2. `pnpm dlx supabase link --project-ref <staging-ref>` then `pnpm dlx supabase db push` (applies `supabase/migrations`).
+2. Follow `docs/SUPABASE-SETUP.md`: `pnpm db:migrate` then `pnpm verify:supabase` (no Supabase CLI needed; `supabase db push` also works and reads the same history).
 3. Set `APP_ENV=staging`, `AUTH_DRIVER=supabase`, `AI_PROVIDER_MODE=live`, `STORAGE_DRIVER=s3`, `QUEUE_DRIVER=bullmq`.
 4. Run `pnpm verify:providers` to check OpenAI/ElevenLabs keys, model names and voice ids (well under US$0.05).
 5. In Supabase Auth settings: Site URL = `APP_BASE_URL`; redirect URL `${APP_BASE_URL}/auth/callback`; custom SMTP (Resend).

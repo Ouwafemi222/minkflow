@@ -11,6 +11,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   if (await getSession()) redirect('/studio');
   const params = await searchParams;
   const e = env();
+  const next = params.next?.startsWith('/') && !params.next.startsWith('//') ? params.next : '/studio';
   return (
     <main id="main" className="container" style={{ maxWidth: 440, paddingTop: 64 }}>
       <Logo />
@@ -21,7 +22,8 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           driver={e.AUTH_DRIVER}
           supabaseUrl={e.NEXT_PUBLIC_SUPABASE_URL}
           supabaseAnonKey={e.NEXT_PUBLIC_SUPABASE_ANON_KEY}
-          redirectTo={new URL(`/auth/callback?next=${encodeURIComponent(params.next ?? '/studio')}`, e.APP_BASE_URL).toString()}
+          redirectTo={new URL(`/auth/callback?next=${encodeURIComponent(next)}`, e.APP_BASE_URL).toString()}
+          next={next}
         />
         <p className="small muted">
           By continuing you agree to the <a href="/legal/terms">Terms</a> and <a href="/legal/privacy">Privacy Policy</a>.

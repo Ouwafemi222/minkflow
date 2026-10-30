@@ -9,7 +9,7 @@ import { PGLiteSocketServer } from '@electric-sql/pglite-socket';
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { migrateLocal, PGlite } from '../src/pglite';
+import { applyAuthEmulation, migrateLocal, PGlite } from '../src/pglite';
 
 const root = fileURLToPath(new URL('../../../', import.meta.url));
 // LOCAL_DB_DIR=memory gives a throwaway database (used by the Playwright e2e suite).
@@ -19,8 +19,14 @@ const port = Number(process.env.LOCAL_DB_PORT ?? 54329);
 
 if (!inMemory) mkdirSync(dataDir, { recursive: true });
 const db = new PGlite(dataDir);
-const ran = await migrateLocal(db);
-console.log(ran.length ? `Applied migrations: ${ran.join(', ')}` : 'Migrations up to date');
+// LOCAL_DB_MIGRATE=emulation-only leaves the schema empty so `pnpm db:migrate` can be rehearsed as on Supabase.
+if (process.env.LOCAL_DB_MIGRATE === 'emulation-only') {
+  await applyAuthEmulation(db);
+  console.log('Auth emulation only; run pnpm db:migrate against this database');
+} else {
+  const ran = await migrateLocal(db);
+  console.log(ran.length ? `Applied migrations: ${ran.join(', ')}` : 'Migrations up to date');
+}
 
 const server = new PGLiteSocketServer({ db, port, host: '127.0.0.1', maxConnections: 20 });
 await server.start();

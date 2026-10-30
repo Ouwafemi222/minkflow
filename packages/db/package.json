@@ -10,7 +10,9 @@
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
-    "db:local": "tsx scripts/local-db.ts"
+    "db:local": "tsx scripts/local-db.ts",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "verify:supabase": "tsx scripts/verify-supabase.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.13",
