@@ -51,14 +51,18 @@ export type ServerEnv = z.infer<typeof ServerEnvSchema>;
 
 let cached: ServerEnv | null = null;
 
+export function envIssues(): string | null {
+  const parsed = ServerEnvSchema.safeParse(process.env);
+  if (parsed.success) return null;
+  return parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
+}
+
 /** Parsed lazily so `next build` does not require runtime secrets. */
 export function env(): ServerEnv {
   if (cached) return cached;
-  const parsed = ServerEnvSchema.safeParse(process.env);
-  if (!parsed.success) {
-    throw new Error(`Invalid web environment: ${parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')}`);
-  }
-  cached = parsed.data;
+  const issues = envIssues();
+  if (issues) throw new Error(`Invalid web environment: ${issues}`);
+  cached = ServerEnvSchema.parse(process.env);
   return cached;
 }
 

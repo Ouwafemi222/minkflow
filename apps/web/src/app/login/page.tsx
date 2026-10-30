@@ -3,12 +3,33 @@ import { redirect } from 'next/navigation';
 import { Logo } from '@/components/SiteChrome';
 import { getSession } from '@/lib/auth';
 import { authProviders } from '@/lib/auth-providers';
-import { env } from '@/lib/env';
+import { env, envIssues } from '@/lib/env';
 import { LoginForm } from './LoginForm';
 
 export const metadata: Metadata = { title: 'Sign in' };
+export const dynamic = 'force-dynamic';
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string; next?: string; mode?: string }> }) {
+  const issues = envIssues();
+  if (issues) {
+    return (
+      <main id="main" className="container" style={{ maxWidth: 520, paddingTop: 64 }}>
+        <Logo />
+        <div className="card stack" style={{ marginTop: 24 }}>
+          <h1 style={{ margin: 0, fontSize: 24 }}>This site is not fully configured yet</h1>
+          <p className="muted" style={{ margin: 0 }}>
+            The login page needs the database and Supabase settings in Vercel. Missing or invalid:
+          </p>
+          <pre className="alert error small" style={{ whiteSpace: 'pre-wrap' }}>
+            {issues}
+          </pre>
+          <p className="small muted" style={{ margin: 0 }}>
+            Add them under Vercel → Project → Settings → Environment Variables (Production), then redeploy.
+          </p>
+        </div>
+      </main>
+    );
+  }
   if (await getSession()) redirect('/studio');
   const params = await searchParams;
   const e = env();

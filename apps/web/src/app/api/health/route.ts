@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { env } from '@/lib/env';
+import { env, envIssues } from '@/lib/env';
 import { db } from '@/lib/services';
 
 export const dynamic = 'force-dynamic';
@@ -7,12 +7,9 @@ export const dynamic = 'force-dynamic';
 /** Reports setting names and error codes only, never values, so a broken deployment can be diagnosed from outside. */
 export async function GET() {
   const started = Date.now();
-  let appEnv: string;
-  try {
-    appEnv = env().APP_ENV;
-  } catch (error) {
-    return NextResponse.json({ ok: false, config: (error as Error).message.replace(/^Invalid web environment: /, '') }, { status: 503 });
-  }
+  const issues = envIssues();
+  if (issues) return NextResponse.json({ ok: false, config: issues }, { status: 503 });
+  const appEnv = env().APP_ENV;
   try {
     await db().query('select 1');
     return NextResponse.json({ ok: true, env: appEnv, db: 'ok', latencyMs: Date.now() - started });
