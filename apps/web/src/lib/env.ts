@@ -89,6 +89,9 @@ const ServerEnvSchema = z
     if (env.DATABASE_SSL === 'verify' && !env.DATABASE_CA_CERT) ctx.addIssue({ code: 'custom', path: ['DATABASE_CA_CERT'], message: 'required when DATABASE_SSL=verify' });
     if (env.STORAGE_DRIVER === 'local' && env.APP_ENV !== 'local') ctx.addIssue({ code: 'custom', path: ['STORAGE_DRIVER'], message: 'local storage is for local development only' });
     if (env.STORAGE_DRIVER === 'local' && env.LOCAL_STORAGE_SECRET.length < 16) ctx.addIssue({ code: 'custom', path: ['LOCAL_STORAGE_SECRET'], message: 'set a random 16+ char secret' });
+    if (env.STORAGE_DRIVER === 's3' && (!env.S3_ENDPOINT || !env.S3_ACCESS_KEY_ID || !env.S3_SECRET_ACCESS_KEY)) {
+      ctx.addIssue({ code: 'custom', path: ['S3_ENDPOINT'], message: 'S3_ENDPOINT, S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY are required when STORAGE_DRIVER=s3' });
+    }
     if (Boolean(env.GOOGLE_OAUTH_CLIENT_ID) !== Boolean(env.GOOGLE_OAUTH_CLIENT_SECRET)) ctx.addIssue({ code: 'custom', path: ['GOOGLE_OAUTH_CLIENT_SECRET'], message: 'set both GOOGLE_OAUTH_CLIENT_ID and GOOGLE_OAUTH_CLIENT_SECRET, or neither' });
     if (env.GOOGLE_OAUTH_CLIENT_ID && Buffer.from(env.TOKEN_ENCRYPTION_KEY, 'base64').length !== 32) ctx.addIssue({ code: 'custom', path: ['TOKEN_ENCRYPTION_KEY'], message: 'required for YouTube: 32 random bytes, base64 (pnpm gen:secret)' });
     if (env.PAYMENTS_ENABLED && !env.PAYSTACK_SECRET_KEY) ctx.addIssue({ code: 'custom', path: ['PAYSTACK_SECRET_KEY'], message: 'required when PAYMENTS_ENABLED=true' });

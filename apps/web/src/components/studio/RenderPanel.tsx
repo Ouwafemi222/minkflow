@@ -1,7 +1,11 @@
 'use client';
 
 import { DURATION_LIMITS } from '@minkflow/contracts';
-import { Download } from 'lucide-react';
+import { Download, Pencil } from 'lucide-react';
+import Link from 'next/link';
+import { useState } from 'react';
+import { errorMessage } from '@/lib/client';
+import { downloadJobVideo } from '@/lib/download-video';
 import type { JobDto } from '@/lib/jobs';
 import { credits } from '@/lib/labels';
 import type { ProjectView } from '@/lib/project-view';
@@ -36,7 +40,11 @@ export function RenderPanel({
   const blocked = busy !== null || active || unsaved;
   const preview = latest(view.jobs, 'preview');
   const render = latest(view.jobs, 'render');
+  const ready = render ?? preview;
+  const [dlError, setDlError] = useState<string | null>(null);
+  const [dlBusy, setDlBusy] = useState(false);
   const afford = (quote: number) => view.balance >= quote;
+  const filename = `${view.project.title.replace(/[^\w\- ]+/g, '').trim().slice(0, 60) || 'video'}${ready && !render ? '-preview' : ''}.mp4`;
 
   const stepButton = (step: Step, label: string, quote: number, enabled: boolean, primary: boolean) => (
     <button className={`btn${primary ? ' primary' : ''}`} disabled={blocked || !enabled || !afford(quote)} onClick={() => onRun(step)}>
@@ -80,22 +88,33 @@ export function RenderPanel({
         </p>
       ) : null}
 
-      {render ? (
+      {ready ? (
         <div className="stack" style={{ ['--gap' as string]: '8px' }}>
-          <h3 style={{ margin: 0 }}>Final video</h3>
-          <video controls preload="metadata" src={`/api/jobs/${render.id}/download?inline=1`} style={{ width: '100%', maxWidth: 720, borderRadius: 12 }} />
+          <h3 style={{ margin: 0 }}>{render ? 'Final video' : 'Draft preview'}</h3>
+          <video controls autoPlay playsInline preload="auto" src={`/api/jobs/${ready.id}/download?inline=1`} style={{ width: '100%', maxWidth: 720, borderRadius: 12 }} />
+          {dlError ? (
+            <p className="alert error small" role="alert">
+              {dlError}
+            </p>
+          ) : null}
           <div className="row">
-            <a className="btn primary" href={`/api/jobs/${render.id}/download`}>
-              <Download size={16} aria-hidden /> Download MP4
-            </a>
-            <span className="small muted">Kept for 30 days after rendering.</span>
+            <Link className="btn primary" href={`/studio/projects/${view.project.id}/edit`}>
+              <Pencil size={16} aria-hidden /> Open edit screen
+            </Link>
+            <button
+              className="btn"
+              type="button"
+              disabled={dlBusy}
+              onClick={() => {
+                setDlBusy(true);
+                setDlError(null);
+                void downloadJobVideo(ready.id, filename).catch((error) => setDlError(errorMessage(error))).finally(() => setDlBusy(false));
+              }}
+            >
+              <Download size={16} aria-hidden /> {dlBusy ? 'Preparing…' : 'Download MP4'}
+            </button>
+            <span className="small muted">{render ? 'Kept for 30 days after rendering.' : 'Low-resolution draft, kept for 7 days.'}</span>
           </div>
-        </div>
-      ) : preview ? (
-        <div className="stack" style={{ ['--gap' as string]: '8px' }}>
-          <h3 style={{ margin: 0 }}>Draft preview</h3>
-          <video controls preload="metadata" src={`/api/jobs/${preview.id}/download?inline=1`} style={{ width: '100%', maxWidth: 720, borderRadius: 12 }} />
-          <span className="small muted">Low-resolution draft, kept for 7 days.</span>
         </div>
       ) : null}
     </section>

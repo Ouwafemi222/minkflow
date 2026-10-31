@@ -48,6 +48,9 @@ export const WorkerEnvSchema = z
     if (env.QUEUE_DRIVER === 'bullmq' && !env.REDIS_URL) ctx.addIssue({ code: 'custom', path: ['REDIS_URL'], message: 'required when QUEUE_DRIVER=bullmq' });
     if (env.STORAGE_DRIVER === 'local' && env.LOCAL_STORAGE_SECRET.length < 16) ctx.addIssue({ code: 'custom', path: ['LOCAL_STORAGE_SECRET'], message: 'set a random secret (16+ chars) for local storage' });
     if (env.APP_ENV !== 'local' && env.STORAGE_DRIVER === 'local') ctx.addIssue({ code: 'custom', path: ['STORAGE_DRIVER'], message: 'local storage is for local development only' });
+    if (env.STORAGE_DRIVER === 's3' && (!env.S3_ENDPOINT || !env.S3_ACCESS_KEY_ID || !env.S3_SECRET_ACCESS_KEY)) {
+      ctx.addIssue({ code: 'custom', path: ['S3_ENDPOINT'], message: 'S3_ENDPOINT, S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY are required when STORAGE_DRIVER=s3' });
+    }
     if (env.APP_ENV !== 'local' && env.DATABASE_SSL === 'disable') ctx.addIssue({ code: 'custom', path: ['DATABASE_SSL'], message: 'use require or verify outside local' });
     if (env.DATABASE_SSL === 'verify' && !env.DATABASE_CA_CERT) ctx.addIssue({ code: 'custom', path: ['DATABASE_CA_CERT'], message: 'required when DATABASE_SSL=verify' });
     if (env.APP_ENV !== 'local' && env.AI_PROVIDER_MODE !== 'live') ctx.addIssue({ code: 'custom', path: ['AI_PROVIDER_MODE'], message: 'mock providers are not allowed outside local' });

@@ -15,6 +15,8 @@ interface Props {
   callbackUrl: string;
   next: string;
   googleEnabled: boolean;
+  /** When set, Google consent stays on this site (minkflow.vercel.app) instead of supabase.co. */
+  googleStartUrl?: string | null;
   initialMode: AuthMode;
 }
 
@@ -94,7 +96,7 @@ function DevLoginForm({ next }: { next: string }) {
   );
 }
 
-function SupabaseLoginForm({ supabaseUrl, supabaseAnonKey, callbackUrl, next, googleEnabled, initialMode }: Props) {
+function SupabaseLoginForm({ supabaseUrl, supabaseAnonKey, callbackUrl, next, googleEnabled, googleStartUrl, initialMode }: Props) {
   const router = useRouter();
   const [view, setView] = useState<View>(initialMode);
   const [email, setEmail] = useState('');
@@ -279,9 +281,15 @@ function SupabaseLoginForm({ supabaseUrl, supabaseAnonKey, callbackUrl, next, go
 
       {isPasswordView && googleEnabled ? (
         <>
-          <button type="button" className="btn" onClick={() => void google()} disabled={busy}>
-            <GoogleMark /> Continue with Google
-          </button>
+          {googleStartUrl ? (
+            <a className="btn" href={googleStartUrl}>
+              <GoogleMark /> Continue with Google
+            </a>
+          ) : (
+            <button type="button" className="btn" onClick={() => void google()} disabled={busy}>
+              <GoogleMark /> Continue with Google
+            </button>
+          )}
           <div className="auth-divider">or</div>
         </>
       ) : null}

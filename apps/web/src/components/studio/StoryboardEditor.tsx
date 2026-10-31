@@ -131,22 +131,17 @@ export function StoryboardEditor({ view, busy, onSaveState, onSaved, onConflict,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [history.present]);
 
-  // Signed URLs for narration audio and the logo, so the in-browser preview plays real voice.
+  // Same-origin file streams so the in-browser preview plays real voice without a signed-URL hop.
   useEffect(() => {
-    const missing = [...new Set(scenes.map((s) => s.voiceAssetId).filter((id): id is string => Boolean(id) && !audioUrls[id!]))];
-    if (missing.length === 0) return;
-    let cancelled = false;
-    void Promise.all(missing.map(async (id) => [id, (await api<{ url: string }>(`/api/assets/${id}/url`)).url] as const))
-      .then((pairs) => !cancelled && setAudioUrls((prev) => ({ ...prev, ...Object.fromEntries(pairs) })))
-      .catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
-  }, [scenes, audioUrls]);
+    const ids = [...new Set(scenes.map((s) => s.voiceAssetId).filter((id): id is string => Boolean(id)))];
+    setAudioUrls((prev) => {
+      const next = Object.fromEntries(ids.map((id) => [id, `/api/assets/${id}/file`]));
+      return ids.every((id) => prev[id] === next[id]) ? prev : { ...prev, ...next };
+    });
+  }, [scenes]);
   useEffect(() => {
     const id = view.doc.brand.logoAssetId;
-    if (!id) return setLogoUrl(null);
-    void api<{ url: string }>(`/api/assets/${id}/url`).then((r) => setLogoUrl(r.url), () => setLogoUrl(null));
+    setLogoUrl(id ? `/api/assets/${id}/file` : null);
   }, [view.doc.brand.logoAssetId]);
 
   // Keyboard: Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z or Ctrl+Y outside text fields; Alt+Arrow to reorder.

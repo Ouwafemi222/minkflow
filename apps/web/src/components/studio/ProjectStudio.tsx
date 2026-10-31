@@ -31,14 +31,22 @@ export function ProjectStudio({ initial, aiMode, voices }: { initial: ProjectVie
 
   const working = view.jobs.some((j) => ACTIVE.has(j.status)) || PENDING_STATUSES.has(view.project.status);
   const wasWorking = useRef(working);
+  const hadVideo = useRef(initial.jobs.some((j) => (j.type === 'render' || j.type === 'preview') && j.status === 'completed'));
   useEffect(() => {
     // Re-render server components (sidebar balance) once a job settles its credits.
     if (wasWorking.current && !working) router.refresh();
     wasWorking.current = working;
+    const ready = view.jobs.find((j) => (j.type === 'render' || j.type === 'preview') && j.status === 'completed');
+    if (ready && !hadVideo.current) {
+      hadVideo.current = true;
+      router.push(`/studio/projects/${view.project.id}/edit`);
+      return;
+    }
+    if (ready) hadVideo.current = true;
     if (!working) return;
     const timer = setInterval(() => void refresh().catch(() => undefined), 2000);
     return () => clearInterval(timer);
-  }, [working, refresh, router]);
+  }, [working, refresh, router, view.jobs, view.project.id]);
 
   async function run(label: string, path: string, body?: unknown) {
     setBusy(label);

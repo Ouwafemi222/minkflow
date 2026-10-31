@@ -96,18 +96,22 @@ code is shown.
 
 ### 4b. Google sign-in (optional; the button stays hidden until this is done)
 
-1. console.cloud.google.com → create (or pick) a project → **APIs & Services → OAuth consent screen**: app name
-   Minkflow, your support email, audience External. Add scopes `openid`, `email`, `profile`.
-2. **APIs & Services → Credentials → Create credentials → OAuth client ID** → type *Web application*.
-   - Authorized JavaScript origins: `<APP_BASE_URL>` (e.g. `http://localhost:3000`).
-   - Authorized redirect URIs: `https://<project-ref>.supabase.co/auth/v1/callback` (Supabase shows this exact URL
-     on its Google provider page).
-3. Copy the **Client ID** and **Client secret** into Supabase → **Authentication → Sign In / Providers → Google**,
-   enable it, save.
-4. Within five minutes the "Continue with Google" button appears on `/login`. Google users land on
-   `/auth/callback` and get the same workspace + 60 credits.
+Continue with Google must start on **this site** (`https://minkflow.vercel.app` or localhost), not on
+`https://<project-ref>.supabase.co`. Otherwise Google’s consent screen says “sign in to” the Supabase project URL.
 
-The client secret goes only into the Supabase dashboard; Minkflow itself never sees it.
+1. console.cloud.google.com → **APIs & Services → OAuth consent screen**: app name **Minkflow**, Application home
+   page `https://minkflow.vercel.app`, support email, audience External. Add scopes `openid`, `email`, `profile`.
+2. **Credentials → your Web application OAuth client**:
+   - Authorized JavaScript origins: `http://localhost:3000` and `https://minkflow.vercel.app`
+   - Authorized redirect URIs (keep the YouTube one too):
+     - `http://localhost:3000/auth/google/callback`
+     - `https://minkflow.vercel.app/auth/google/callback`
+     - `http://localhost:3000/api/youtube/callback`
+     - `https://minkflow.vercel.app/api/youtube/callback`
+3. Put the **same** Client ID and Client secret in:
+   - `.env.local` / Vercel: `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`
+   - Supabase → **Authentication → Sign In / Providers → Google** (needed so the ID token can create a session)
+4. Testers see “Sign in to Minkflow” / `minkflow.vercel.app` and land in Studio with the usual workspace + 60 credits.
 
 ### 4c. "Connect your YouTube" (optional; the button explains it is unavailable until this is done)
 

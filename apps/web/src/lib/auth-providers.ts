@@ -12,6 +12,7 @@ export interface AuthProviders {
 export async function authProviders(): Promise<AuthProviders> {
   const e = env();
   if (e.AUTH_DRIVER !== 'supabase') return { google: false };
+  if (e.GOOGLE_OAUTH_CLIENT_ID && e.GOOGLE_OAUTH_CLIENT_SECRET) return { google: true };
   try {
     const res = await fetch(`${e.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/settings`, {
       headers: { apikey: e.NEXT_PUBLIC_SUPABASE_ANON_KEY },

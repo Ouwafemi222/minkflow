@@ -42,7 +42,13 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       <Logo />
       <div className="card stack" style={{ marginTop: 24 }}>
         <h1 style={{ margin: 0, fontSize: 24 }}>{params.mode === 'signup' ? 'Create your account' : 'Welcome to Minkflow'}</h1>
-        {params.error ? <p className="alert error">That sign-in didn&apos;t complete. The link may have expired or already been used. Please try again.</p> : null}
+        {params.error ? (
+          <p className="alert error">
+            {params.error === 'google'
+              ? 'Google sign-in did not complete. Try again, or use email.'
+              : "That sign-in didn't complete. The link may have expired or already been used. Please try again."}
+          </p>
+        ) : null}
         <LoginForm
           driver={e.AUTH_DRIVER}
           supabaseUrl={e.NEXT_PUBLIC_SUPABASE_URL}
@@ -50,6 +56,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           callbackUrl={publicUrl('/auth/callback', await headers(), e.APP_BASE_URL, e.ALLOWED_ORIGINS).toString()}
           next={next}
           googleEnabled={providers.google}
+          googleStartUrl={e.GOOGLE_OAUTH_CLIENT_ID && e.GOOGLE_OAUTH_CLIENT_SECRET ? `/api/auth/google?next=${encodeURIComponent(next)}` : null}
           initialMode={params.mode === 'signup' ? 'signup' : 'signin'}
         />
         <p className="small muted" style={{ margin: 0 }}>
