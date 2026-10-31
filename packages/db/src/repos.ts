@@ -351,14 +351,14 @@ export async function updateMyProfile(tx: Queryable, p: { displayName?: string; 
   return getMyProfile(tx);
 }
 
-export async function setAccountDeletion(tx: Queryable, requested: boolean): Promise<Date | null> {
-  const { rows } = await tx.query<{ at: Date | null }>('select public.set_account_deletion($1) as at', [requested]);
+export async function setAccountDeletion(tx: Queryable, requested: boolean, reason?: string | null, note?: string | null): Promise<Date | null> {
+  const { rows } = await tx.query<{ at: Date | null }>('select public.set_account_deletion($1, $2, $3) as at', [requested, reason ?? null, note ?? null]);
   return rows[0]?.at ?? null;
 }
 
-export async function listDeletionRequests(q: Queryable, limit = 50): Promise<Array<{ id: string; email: string | null; display_name: string | null; deletion_requested_at: Date }>> {
-  return (await q.query<{ id: string; email: string | null; display_name: string | null; deletion_requested_at: Date }>(
-    `select p.id, u.email, p.display_name, p.deletion_requested_at from public.profiles p join auth.users u on u.id = p.id
+export async function listDeletionRequests(q: Queryable, limit = 50): Promise<Array<{ id: string; email: string | null; display_name: string | null; deletion_requested_at: Date; deletion_reason: string | null; deletion_note: string | null }>> {
+  return (await q.query<{ id: string; email: string | null; display_name: string | null; deletion_requested_at: Date; deletion_reason: string | null; deletion_note: string | null }>(
+    `select p.id, u.email, p.display_name, p.deletion_requested_at, p.deletion_reason, p.deletion_note from public.profiles p join auth.users u on u.id = p.id
      where p.deletion_requested_at is not null order by p.deletion_requested_at limit $1`, [limit])).rows;
 }
 

@@ -7,3 +7,4 @@ export * from './ai';
 export * from './assemble';
 export * from './pricing';
 export * from './project';
+export * from './account';

@@ -128,9 +128,10 @@ describe('profiles', () => {
   });
 
   it('records and cancels an account deletion request', async () => {
-    const at = await withUser(db, alice.userId, (tx) => repo.setAccountDeletion(tx, true));
+    await expect(withUser(db, alice.userId, (tx) => repo.setAccountDeletion(tx, true))).rejects.toMatchObject({ code: 'VALIDATION_FAILED' });
+    const at = await withUser(db, alice.userId, (tx) => repo.setAccountDeletion(tx, true, 'not_using'));
     expect(at).toBeInstanceOf(Date);
-    expect((await repo.listDeletionRequests(db)).map((r) => r.email)).toContain('alice@example.com');
+    expect((await repo.listDeletionRequests(db)).find((r) => r.email === 'alice@example.com')).toMatchObject({ deletion_reason: 'not_using' });
     expect(await withUser(db, alice.userId, (tx) => repo.setAccountDeletion(tx, false))).toBeNull();
     expect((await repo.listDeletionRequests(db)).map((r) => r.email)).not.toContain('alice@example.com');
   });

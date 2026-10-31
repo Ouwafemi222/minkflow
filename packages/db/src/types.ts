@@ -17,6 +17,8 @@ export interface ProfileRow {
   avatar_mode: AvatarMode;
   avatar_asset_id: string | null;
   deletion_requested_at: Date | null;
+  deletion_reason: string | null;
+  deletion_note: string | null;
   created_at: Date;
   updated_at: Date;
 }

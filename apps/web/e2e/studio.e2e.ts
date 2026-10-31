@@ -145,6 +145,7 @@ test('account: rename, photo upload/remove, YouTube card, deletion request and c
   await expect(page.getByText('Photo removed.')).toBeVisible();
   await expect(sidebar.locator('img.avatar')).toHaveCount(0);
 
+  await page.getByLabel('Why do you want to delete your account?').selectOption('not_using');
   await page.getByLabel(/Type profile@e2e\.test to confirm/).fill('profile@e2e.test');
   await page.getByRole('button', { name: 'Delete my account' }).click();
   await expect(page).toHaveURL(/account=deletion-requested/);

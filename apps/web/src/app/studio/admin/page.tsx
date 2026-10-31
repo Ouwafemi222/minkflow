@@ -1,3 +1,4 @@
+import { deletionReasonLabel } from '@minkflow/contracts';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { GrantCreditsForm } from '@/components/GrantCreditsForm';
@@ -146,6 +147,7 @@ export default async function AdminPage() {
                   <th scope="col">Requested</th>
                   <th scope="col">Email</th>
                   <th scope="col">Name</th>
+                  <th scope="col">Reason</th>
                   <th scope="col">User ID</th>
                 </tr>
               </thead>
@@ -155,6 +157,7 @@ export default async function AdminPage() {
                     <td>{date(r.deletion_requested_at)}</td>
                     <td>{r.email}</td>
                     <td>{r.display_name}</td>
+                    <td>{deletionReasonLabel(r.deletion_reason, r.deletion_note)}</td>
                     <td>
                       <code>{r.id}</code>
                     </td>

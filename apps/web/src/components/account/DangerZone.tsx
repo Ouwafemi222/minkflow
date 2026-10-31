@@ -1,19 +1,28 @@
 'use client';
 
+import { DELETION_REASONS, type DeletionReasonId } from '@minkflow/contracts';
 import { useState } from 'react';
 import { api, errorMessage } from '@/lib/client';
 
 /** Records a deletion request and signs the user out; an operator completes it within 30 days. */
 export function DangerZone({ email }: { email: string }) {
+  const [reason, setReason] = useState<DeletionReasonId | ''>('');
+  const [note, setNote] = useState('');
   const [confirmText, setConfirmText] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
+  const canSubmit =
+    Boolean(reason) &&
+    (reason !== 'other' || note.trim().length > 0) &&
+    confirmText.trim().toLowerCase() === email.toLowerCase();
+
   async function requestDeletion() {
+    if (!reason || !canSubmit) return;
     setBusy(true);
     setError('');
     try {
-      await api('/api/profile/deletion', { method: 'POST', body: { requested: true } });
+      await api('/api/profile/deletion', { method: 'POST', body: { requested: true, reason, note: reason === 'other' ? note.trim() : undefined } });
       await fetch('/auth/signout', { method: 'POST' });
       window.location.assign('/?account=deletion-requested');
     } catch (e) {
@@ -32,6 +41,25 @@ export function DangerZone({ email }: { email: string }) {
         YouTube. Payment records we are legally required to keep are retained. Until then you can sign back in and cancel.
       </p>
       <label className="field">
+        Why do you want to delete your account?
+        <select className="input" value={reason} onChange={(e) => setReason(e.target.value as DeletionReasonId | '')} required>
+          <option value="" disabled>
+            Choose a reason
+          </option>
+          {DELETION_REASONS.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      {reason === 'other' ? (
+        <label className="field">
+          Please tell us a bit more
+          <input className="input" value={note} maxLength={200} onChange={(e) => setNote(e.target.value)} />
+        </label>
+      ) : null}
+      <label className="field">
         <span>
           Type <strong>{email}</strong> to confirm
         </span>
@@ -43,7 +71,7 @@ export function DangerZone({ email }: { email: string }) {
         </p>
       ) : null}
       <div>
-        <button type="button" className="btn danger" onClick={() => void requestDeletion()} disabled={busy || confirmText.trim().toLowerCase() !== email.toLowerCase()}>
+        <button type="button" className="btn danger" onClick={() => void requestDeletion()} disabled={busy || !canSubmit}>
           {busy ? 'Requesting…' : 'Delete my account'}
         </button>
       </div>

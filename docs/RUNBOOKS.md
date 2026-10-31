@@ -113,7 +113,7 @@ Run before the beta and then monthly. Record date, duration and result in `docs/
 
 ## Account deletion
 
-Requests appear on `/studio/admin` → "Account deletion requests" (users can cancel by signing back in). Complete
+Requests appear on `/studio/admin` → "Account deletion requests", including the reason the user chose (users can cancel by signing back in). Complete
 within 30 days. A one-step purge is **not built yet** (V-25: it needs a decision on how long ledger/payment rows are
 kept). Do **not** delete the user from Supabase → Authentication → Users: the cascade fails on the append-only
 credit ledger. Interim manual procedure in the SQL Editor, for `<user id>` from the admin table:
