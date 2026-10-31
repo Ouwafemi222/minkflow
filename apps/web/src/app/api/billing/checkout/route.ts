@@ -4,6 +4,7 @@ import { AppError } from '@minkflow/shared';
 import { z } from 'zod';
 import { authed, readJson } from '@/lib/api';
 import { env } from '@/lib/env';
+import { publicUrl } from '@/lib/public-url';
 import { initializeTransaction } from '@/lib/paystack';
 import { db } from '@/lib/services';
 
@@ -22,7 +23,7 @@ export const POST = authed(
       email: ctx.session.email,
       amountMinor: pack.usdCents,
       reference,
-      callbackUrl: new URL(`/studio/billing?reference=${reference}`, env().APP_BASE_URL).toString(),
+      callbackUrl: publicUrl(`/studio/billing?reference=${reference}`, ctx.req.headers, env().APP_BASE_URL, env().ALLOWED_ORIGINS).toString(),
       metadata: { workspaceId: ws.id, packId: pack.id },
     });
     return { authorizationUrl, reference };

@@ -5,6 +5,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { log } from '@/lib/api';
 import { getSession } from '@/lib/auth';
 import { env } from '@/lib/env';
+import { publicOrigin } from '@/lib/public-url';
 import { db } from '@/lib/services';
 import { accountUrl, YT_STATE_COOKIE, YT_STATE_PATH, youtubeClient } from '@/lib/youtube';
 import { exchangeCode, fetchMyChannel, revokeToken } from '@/lib/youtube-oauth';
@@ -17,15 +18,16 @@ function sameValue(a: string, b: string): boolean {
 
 /** Google redirects here after the consent screen. Always answers with a redirect back to the account page. */
 export async function GET(req: NextRequest) {
+  const base = publicOrigin(req.headers, env().APP_BASE_URL, env().ALLOWED_ORIGINS);
   const finish = (result: string) => {
-    const res = NextResponse.redirect(accountUrl(result));
+    const res = NextResponse.redirect(accountUrl(result, base));
     res.cookies.set(YT_STATE_COOKIE, '', { path: YT_STATE_PATH, maxAge: 0 });
     return res;
   };
 
   const session = await getSession();
-  if (!session) return NextResponse.redirect(new URL('/login?next=/studio/account', env().APP_BASE_URL));
-  const client = youtubeClient();
+  if (!session) return NextResponse.redirect(new URL('/login?next=/studio/account', base));
+  const client = youtubeClient(base);
   if (!client) return finish('unavailable');
 
   const params = req.nextUrl.searchParams;

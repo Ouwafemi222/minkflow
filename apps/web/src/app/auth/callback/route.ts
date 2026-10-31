@@ -2,6 +2,7 @@ import type { EmailOtpType } from '@supabase/supabase-js';
 import { NextResponse, type NextRequest } from 'next/server';
 import { supabaseServer } from '@/lib/auth';
 import { env } from '@/lib/env';
+import { publicOrigin } from '@/lib/public-url';
 
 const LINK_TYPES = new Set<EmailOtpType>(['email', 'magiclink', 'signup', 'invite', 'email_change', 'recovery']);
 
@@ -13,7 +14,7 @@ export async function GET(req: NextRequest) {
   const params = req.nextUrl.searchParams;
   const next = params.get('next') ?? '/studio';
   const safeNext = next.startsWith('/') && !next.startsWith('//') ? next : '/studio';
-  const base = env().APP_BASE_URL;
+  const base = publicOrigin(req.headers, env().APP_BASE_URL, env().ALLOWED_ORIGINS);
   const code = params.get('code');
   const tokenHash = params.get('token_hash');
   const type = params.get('type') as EmailOtpType | null;

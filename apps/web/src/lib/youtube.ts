@@ -6,15 +6,15 @@ import type { OAuthClient } from './youtube-oauth';
 export const YT_STATE_COOKIE = 'mf_yt_oauth';
 export const YT_STATE_PATH = '/api/youtube';
 
-export function youtubeClient(): OAuthClient | null {
+export function youtubeClient(base = env().APP_BASE_URL): OAuthClient | null {
   if (!youtubeAvailable()) return null;
   const e = env();
   return {
     clientId: e.GOOGLE_OAUTH_CLIENT_ID,
     clientSecret: e.GOOGLE_OAUTH_CLIENT_SECRET,
-    redirectUri: new URL('/api/youtube/callback', e.APP_BASE_URL).toString(),
+    redirectUri: new URL('/api/youtube/callback', base).toString(),
   };
 }
 
 /** Where the account page shows the result of a connect/disconnect attempt. */
-export const accountUrl = (result: string) => new URL(`/studio/account?youtube=${result}#youtube`, env().APP_BASE_URL);
+export const accountUrl = (result: string, base = env().APP_BASE_URL) => new URL(`/studio/account?youtube=${result}#youtube`, base);

@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { Logo } from '@/components/SiteChrome';
 import { getSession } from '@/lib/auth';
 import { authProviders } from '@/lib/auth-providers';
 import { env, envIssues } from '@/lib/env';
+import { publicUrl } from '@/lib/public-url';
 import { LoginForm } from './LoginForm';
 
 export const metadata: Metadata = { title: 'Sign in' };
@@ -45,7 +47,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           driver={e.AUTH_DRIVER}
           supabaseUrl={e.NEXT_PUBLIC_SUPABASE_URL}
           supabaseAnonKey={e.NEXT_PUBLIC_SUPABASE_ANON_KEY}
-          callbackUrl={new URL('/auth/callback', e.APP_BASE_URL).toString()}
+          callbackUrl={publicUrl('/auth/callback', await headers(), e.APP_BASE_URL, e.ALLOWED_ORIGINS).toString()}
           next={next}
           googleEnabled={providers.google}
           initialMode={params.mode === 'signup' ? 'signup' : 'signin'}
