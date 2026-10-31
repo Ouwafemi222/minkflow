@@ -1,3 +1,4 @@
+import { resolveVoiceId } from '@minkflow/ai';
 import { captionsFromWords, MICRO, PRICING, SceneSchema, sceneFramesForAudio, type Scene } from '@minkflow/contracts';
 import { applyToLatestRevision, extendAssetExpiry, findAssetByCacheKey, getAssets, insertAsset, linkJobArtifact, loadLatestDocument, type AssetRow } from '@minkflow/db';
 import { AppError } from '@minkflow/shared';
@@ -73,7 +74,10 @@ export const processMedia: Processor = async (ctx) => {
   const { db, tts, config } = ctx.deps;
   const { doc } = await loadLatestDocument(db, projectId);
   if (!doc.storyboard) throw new AppError('INVALID_STATE', 'Generate a storyboard first');
-  const voiceId = doc.input.voiceId;
+  const voiceId = resolveVoiceId(doc.input.voiceId, tts.listVoices());
+  if (voiceId !== doc.input.voiceId) {
+    await applyToLatestRevision(db, projectId, (d) => ({ ...d, input: { ...d.input, voiceId } }));
+  }
   const scenes = doc.storyboard.scenes;
   const existing = new Map((await getAssets(db, scenes.flatMap((s) => (s.voiceAssetId ? [s.voiceAssetId] : [])))).map((a) => [a.id, a]));
   const results = new Map<string, { narration: string; data: Narration }>();

@@ -8,6 +8,7 @@ import { requireSession } from '@/lib/auth';
 import { env } from '@/lib/env';
 import { loadProjectView } from '@/lib/project-view';
 import { db } from '@/lib/services';
+import { availableVoices } from '@/lib/voices';
 
 export const metadata: Metadata = { title: 'Studio' };
 
@@ -17,7 +18,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   if (!z.uuid().safeParse(id).success) notFound();
   try {
     const view = await withUser(db(), session.userId, (tx) => loadProjectView(tx, id));
-    return <ProjectStudio initial={JSON.parse(JSON.stringify(view))} aiMode={env().AI_PROVIDER_MODE} />;
+    return <ProjectStudio initial={JSON.parse(JSON.stringify(view))} aiMode={env().AI_PROVIDER_MODE} voices={availableVoices()} />;
   } catch (error) {
     if (isAppError(error) && error.code === 'NOT_FOUND') notFound();
     throw error;

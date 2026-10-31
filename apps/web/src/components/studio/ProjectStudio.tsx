@@ -15,7 +15,7 @@ import { StoryboardEditor, type SaveState } from './StoryboardEditor';
 const ACTIVE = new Set(['queued', 'running', 'retry_pending']);
 const PENDING_STATUSES = new Set(['script_pending', 'storyboard_pending', 'media_pending', 'render_queued', 'rendering', 'retry_pending']);
 
-export function ProjectStudio({ initial, aiMode }: { initial: ProjectView; aiMode: 'mock' | 'voice' | 'live' }) {
+export function ProjectStudio({ initial, aiMode, voices }: { initial: ProjectView; aiMode: 'mock' | 'voice' | 'live'; voices: Array<{ id: string; name: string; description: string }> }) {
   const router = useRouter();
   const [view, setView] = useState(initial);
   const [notice, setNotice] = useState<{ tone: 'error' | 'success' | 'warning'; text: string } | null>(null);
@@ -142,7 +142,27 @@ export function ProjectStudio({ initial, aiMode }: { initial: ProjectView; aiMod
             onSaved={(version, brand) => setView((v) => ({ ...v, project: { ...v.project, version }, doc: { ...v.doc, brand } }))}
             onError={(text) => setNotice({ tone: 'error', text })}
           />
-          <RenderPanel view={view} busy={busy} saveState={saveState} onRun={(step) => void run(step, `/api/projects/${project.id}/${step}`)} />
+          <RenderPanel
+            view={view}
+            voices={voices}
+            busy={busy}
+            saveState={saveState}
+            onRun={(step) => void run(step, `/api/projects/${project.id}/${step}`)}
+            onVoiceChange={(voiceId) =>
+              void (async () => {
+                setBusy('voice');
+                setNotice(null);
+                try {
+                  const next = await api<ProjectView>(`/api/projects/${project.id}`, { method: 'PATCH', body: { voiceId } });
+                  setView(next);
+                } catch (error) {
+                  setNotice({ tone: 'error', text: errorMessage(error) });
+                } finally {
+                  setBusy(null);
+                }
+              })()
+            }
+          />
         </>
       ) : null}
     </div>

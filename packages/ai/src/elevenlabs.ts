@@ -88,6 +88,14 @@ export function createElevenLabsProvider(config: ElevenLabsConfig): TtsProvider 
   };
 }
 
+/** Maps leftover mock voice IDs (or any unknown id) onto the first configured real voice. */
+export function resolveVoiceId(requested: string, voices: Voice[]): string {
+  if (voices.some((v) => v.id === requested)) return requested;
+  const fallback = voices[0]?.id;
+  if (!fallback) throw new AppError('VALIDATION_FAILED', 'No voices are configured.');
+  return fallback;
+}
+
 export function parseVoiceList(raw: string | undefined): Voice[] {
   return (raw ?? '')
     .split(',')

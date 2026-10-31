@@ -3,7 +3,7 @@ export * from './structured';
 export * from './prompts';
 export * from './planner';
 export { createOpenAiProvider, type OpenAiConfig } from './openai';
-export { createElevenLabsProvider, parseVoiceList, wordsFromCharacterAlignment, type ElevenLabsConfig } from './elevenlabs';
+export { createElevenLabsProvider, parseVoiceList, resolveVoiceId, wordsFromCharacterAlignment, type ElevenLabsConfig } from './elevenlabs';
 export { createMockLlm, createMockTts, MOCK_VOICES } from './mock';
 
 import { createElevenLabsProvider, parseVoiceList } from './elevenlabs';

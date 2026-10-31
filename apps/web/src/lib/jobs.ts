@@ -38,7 +38,7 @@ export function toJobDto(job: JobRow): JobDto {
     maxAttempts: job.max_attempts,
     reservedCredits: Number(job.reserved_credits),
     error: job.error_code
-      ? { code: job.error_code, message: known?.message ?? 'The job stopped unexpectedly. Your credits were refunded.', retryable: known?.retryable ?? true }
+      ? { code: job.error_code, message: job.error_message || known?.message || 'The job stopped unexpectedly. Your credits were refunded.', retryable: known?.retryable ?? true }
       : null,
     result: job.result_json,
     cancelRequested: job.cancel_requested,

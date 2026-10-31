@@ -13,7 +13,21 @@ function latest(jobs: JobDto[], type: string) {
   return jobs.find((j) => j.type === type && j.status === 'completed');
 }
 
-export function RenderPanel({ view, busy, saveState, onRun }: { view: ProjectView; busy: string | null; saveState: SaveState; onRun: (step: Step) => void }) {
+export function RenderPanel({
+  view,
+  voices,
+  busy,
+  saveState,
+  onRun,
+  onVoiceChange,
+}: {
+  view: ProjectView;
+  voices: Array<{ id: string; name: string; description: string }>;
+  busy: string | null;
+  saveState: SaveState;
+  onRun: (step: Step) => void;
+  onVoiceChange: (voiceId: string) => void;
+}) {
   const scenes = view.doc.storyboard?.scenes ?? [];
   const missingVoice = scenes.some((s) => !s.voiceAssetId);
   const active = view.jobs.some((j) => j.status === 'queued' || j.status === 'running' || j.status === 'retry_pending');
@@ -42,6 +56,19 @@ export function RenderPanel({ view, busy, saveState, onRun }: { view: ProjectVie
         </p>
       ) : null}
       {view.watermark ? <p className="small muted">Exports include a small “Made with Minkflow” watermark until your first credit purchase.</p> : null}
+      {voices.length ? (
+        <label className="field" style={{ maxWidth: 360 }}>
+          Voice
+          <select className="input" value={view.doc.input.voiceId} disabled={blocked} onChange={(e) => onVoiceChange(e.target.value)}>
+            {voices.some((v) => v.id === view.doc.input.voiceId) ? null : <option value={view.doc.input.voiceId}>Previous voice (choose a new one)</option>}
+            {voices.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
       <div className="row">
         {stepButton('media', missingVoice ? 'Generate voice & captions' : 'Voice up to date', view.quotes.media, missingVoice, missingVoice)}
         {stepButton('preview', 'Draft preview (low-res)', view.quotes.preview, !missingVoice && !tooLong, false)}
