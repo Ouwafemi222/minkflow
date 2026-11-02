@@ -13,9 +13,9 @@ export function Logo({ href = '/' }: { href?: string }) {
   );
 }
 
-export function SiteHeader() {
+export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
   return (
-    <header className="site-header">
+    <header className={overlay ? 'site-header overlay' : 'site-header'}>
       <div className="container spread">
         <Logo />
         <nav aria-label="Main" className="row">
@@ -52,10 +52,10 @@ export function SiteFooter() {
   );
 }
 
-export function MarketingShell({ children }: { children: ReactNode }) {
+export function MarketingShell({ children, overlay }: { children: ReactNode; overlay?: boolean }) {
   return (
     <>
-      <SiteHeader />
+      <SiteHeader overlay={overlay} />
       <main id="main">{children}</main>
       <SiteFooter />
     </>

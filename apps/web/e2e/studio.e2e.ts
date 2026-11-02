@@ -36,6 +36,7 @@ function tinyPng(): Buffer {
 test.describe('marketing screenshots', () => {
   for (const path of ['/', '/pricing', '/legal/terms', '/login']) {
     test(`renders ${path}`, async ({ page }) => {
+      if (path === '/') await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.goto(path);
       await page.evaluate(() => document.fonts.ready);
       await expect(page).toHaveScreenshot(`${path === '/' ? 'home' : path.slice(1).replace(/\//g, '-')}.png`, { fullPage: true });

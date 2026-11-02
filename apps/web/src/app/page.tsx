@@ -1,6 +1,5 @@
-import { brand } from '@minkflow/brand';
 import { TEMPLATE_IDS, TEMPLATE_META } from '@minkflow/contracts';
-import Link from 'next/link';
+import { HeroStage } from '@/components/marketing/HeroStage';
 import { MarketingShell } from '@/components/SiteChrome';
 
 const STEPS = [
@@ -19,23 +18,8 @@ const FAQ = [
 
 export default function HomePage() {
   return (
-    <MarketingShell>
-      <section className="hero container">
-        <span className="badge">Private beta</span>
-        <h1>Turn any idea into a narrated, animated explainer video</h1>
-        <p>{brand.description} Script, storyboard, voice and captions — all editable, in one place.</p>
-        <div className="row" style={{ justifyContent: 'center' }}>
-          <Link href="/login?mode=signup" className="btn primary">
-            Create your first video
-          </Link>
-          <Link href="/pricing" className="btn">
-            See pricing
-          </Link>
-        </div>
-        <p className="small muted" style={{ marginTop: 16 }}>
-          60 free credits on sign-up — enough for a short first video. No card required.
-        </p>
-      </section>
+    <MarketingShell overlay>
+      <HeroStage />
 
       <section className="section container" aria-labelledby="how">
         <h2 id="how">How it works</h2>
