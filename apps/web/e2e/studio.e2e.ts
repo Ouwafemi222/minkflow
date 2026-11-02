@@ -76,7 +76,7 @@ test('creator goes from topic to voiced storyboard', async ({ page }) => {
 
   await page.getByRole('button', { name: /Generate voice/ }).click();
   await expect(page.getByRole('region', { name: 'Storyboard editor' }).locator('.badge', { hasText: 'Voice ready' })).toBeVisible({ timeout: 90_000 });
-  await expect(page.getByRole('button', { name: /Render final 1080p MP4/ })).toBeEnabled();
+  await expect(page.getByRole('button', { name: /Render final 720p MP4/ })).toBeEnabled();
 
   // Brand kit: logo upload is validated server-side and stored as an asset.
   await page.locator('input[type=file]').setInputFiles({ name: 'logo.png', mimeType: 'image/png', buffer: tinyPng() });

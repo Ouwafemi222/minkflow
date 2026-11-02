@@ -11,6 +11,8 @@ import type { JobContext, ProcessorResult } from '../types';
 
 const EXT: Record<string, string> = { 'audio/mpeg': 'mp3', 'audio/wav': 'wav', 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' };
 const PREVIEW_SCALE = 1 / 3;
+/** Final export is 1280x720 (2/3 of the 1920x1080 composition) to keep Chrome memory lower. */
+const RENDER_SCALE = 2 / 3;
 
 async function renderVideo(ctx: JobContext, kind: 'preview' | 'render'): Promise<ProcessorResult> {
   const { db, storage, renderer, config } = ctx.deps;
@@ -60,7 +62,7 @@ async function renderVideo(ctx: JobContext, kind: 'preview' | 'render'): Promise
       })),
     });
     const durationSeconds = manifestDurationFrames(manifest) / VIDEO.fps;
-    const scale = kind === 'preview' ? PREVIEW_SCALE : 1;
+    const scale = kind === 'preview' ? PREVIEW_SCALE : RENDER_SCALE;
     const output = join(tmp, `${kind}.mp4`);
 
     ctx.setProgress(0.05, 'rendering');

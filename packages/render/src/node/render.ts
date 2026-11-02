@@ -20,7 +20,7 @@ export function getBundle(): Promise<string> {
 
 export interface RenderOptions {
   outputPath: string;
-  /** 1 = final 1080p; 1/3 = 640x360 draft preview from the same compositions. */
+  /** 1 = 1080p; 2/3 = 720p final; 1/3 = 640x360 draft preview. */
   scale?: number;
   concurrency?: number;
   timeoutMs?: number;

@@ -80,7 +80,7 @@ export function RenderPanel({
       <div className="row">
         {stepButton('media', missingVoice ? 'Generate voice & captions' : 'Voice up to date', view.quotes.media, missingVoice, missingVoice)}
         {stepButton('preview', 'Draft preview (low-res)', view.quotes.preview, !missingVoice && !tooLong, false)}
-        {stepButton('render', 'Render final 1080p MP4', view.quotes.render, !missingVoice && !tooLong, !missingVoice)}
+        {stepButton('render', 'Render final 720p MP4', view.quotes.render, !missingVoice && !tooLong, !missingVoice)}
       </div>
       {!afford(Math.min(view.quotes.preview, view.quotes.render)) && !missingVoice ? (
         <p className="alert warning small">

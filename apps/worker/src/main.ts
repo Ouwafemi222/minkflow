@@ -103,7 +103,8 @@ const health = createServer(async (req, res) => {
   }
   res.writeHead(404).end();
 });
-health.listen(env.WORKER_PORT, () => logger.info('worker started', { port: env.WORKER_PORT, driver: env.QUEUE_DRIVER, ai: env.AI_PROVIDER_MODE, storage: env.STORAGE_DRIVER }));
+const port = Number.parseInt(process.env.PORT ?? String(env.WORKER_PORT), 10);
+health.listen(port, () => logger.info('worker started', { port, driver: env.QUEUE_DRIVER, ai: env.AI_PROVIDER_MODE, storage: env.STORAGE_DRIVER }));
 
 let shuttingDown = false;
 async function shutdown(signal: string) {

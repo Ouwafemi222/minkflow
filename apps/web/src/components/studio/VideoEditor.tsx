@@ -106,7 +106,7 @@ export function VideoEditor({ view, jobId, jobType }: { view: ProjectView; jobId
           </Link>
           <h1 style={{ margin: 0 }}>{view.project.title}</h1>
           <p className="muted small" style={{ margin: 0 }}>
-            {jobType === 'preview' ? 'Draft preview — add captions here, then render 1080p when you are ready.' : 'Final video. Caption size and text are free to edit on this page.'}
+            {jobType === 'preview' ? 'Draft preview — add captions here, then render 720p when you are ready.' : 'Final video. Caption size and text are free to edit on this page.'}
           </p>
         </div>
         <button className="btn primary" type="button" disabled={busy} onClick={() => void onDownload()}>
