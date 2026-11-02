@@ -99,7 +99,9 @@ export async function runJob(deps: PipelineDeps, job: JobRow): Promise<RunOutcom
       log.info('job canceled', { charged });
       return 'canceled';
     }
-    const appError = isAppError(error) ? error : new AppError('INTERNAL', undefined, { cause: String(error) });
+    const appError = isAppError(error)
+      ? error
+      : new AppError('INTERNAL', error instanceof Error ? error.message.slice(0, 300) : String(error).slice(0, 300));
     if (!isAppError(error)) log.error('job crashed', { error: error instanceof Error ? error.stack : String(error) });
     const delaySeconds = appError.code === 'SPEND_CAP_REACHED' ? 900 : Math.ceil(backoffDelay(job.attempt_count, { baseMs: 10_000, maxMs: 300_000 }) / 1000);
     const result = await failJob(db, job.id, config.workerId, appError.code, appError.message, appError.retryable, delaySeconds);

@@ -58,15 +58,16 @@ test('creator goes from topic to voiced storyboard', async ({ page }) => {
   await expect(scenes.locator('.scene-item')).toHaveCount(5, { timeout: 60_000 });
   await expect(page.getByText('All changes saved')).toBeVisible();
 
-  // Edit narration -> autosave; only that scene loses its (future) voice; undo restores it.
+  // Edit a scene's spoken line -> autosave; undo restores it.
   await scenes.locator('.scene-select').nth(1).click();
-  const narration = page.getByRole('textbox', { name: 'Narration', exact: true });
-  const original = await narration.inputValue();
-  await narration.fill('Compound interest means you earn interest on your interest.');
+  const voiceLine = page.getByRole('textbox', { name: 'Scene 2 voice line' });
+  const original = await voiceLine.inputValue();
+  await voiceLine.fill('Compound interest means you earn interest on your interest.');
+  await expect(page.getByRole('textbox', { name: 'What the voice says' })).toHaveValue('Compound interest means you earn interest on your interest.');
   await expect(page.getByText('All changes saved')).toBeVisible();
   await page.locator('body').click({ position: { x: 5, y: 5 } });
   await page.getByRole('button', { name: 'Undo' }).click();
-  await expect(narration).toHaveValue(original);
+  await expect(voiceLine).toHaveValue(original);
   await expect(page.getByText('All changes saved')).toBeVisible();
 
   // Template switch produces a valid default visual.

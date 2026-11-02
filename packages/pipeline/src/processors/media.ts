@@ -39,7 +39,11 @@ async function synthesizeScene(ctx: JobContext, scene: Scene, voiceId: string, c
     ctx.log.warn('narration duration differs from alignment', { durationMs, alignmentEndMs: result.alignmentEndMs });
   }
   const key = storageKeys.narration(ctx.job.workspace_id, hash, result.extension);
-  await storage.put(key, result.audio, result.mime);
+  try {
+    await storage.put(key, result.audio, result.mime);
+  } catch (error) {
+    throw new AppError('INTERNAL', error instanceof Error ? error.message.slice(0, 300) : 'Could not save the generated voice file.');
+  }
   const words = result.words.map((w) => ({ ...w, endMs: Math.min(w.endMs, durationMs) }));
   let asset: AssetRow;
   try {

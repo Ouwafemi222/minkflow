@@ -95,18 +95,34 @@ export interface S3StorageOptions {
   secretAccessKey: string;
 }
 
+function mapS3Error(error: unknown): never {
+  const err = error as { name?: string; message?: string; $metadata?: { httpStatusCode?: number } };
+  const status = err.$metadata?.httpStatusCode;
+  if (status === 401 || status === 403) {
+    throw new Error(`Cloud storage rejected the file (${status}). The R2 access keys are invalid or missing Object Read & Write.`);
+  }
+  throw error instanceof Error ? error : new Error(String(error));
+}
+
 export function createS3Storage(o: S3StorageOptions): ObjectStorage {
   const client = new S3Client({
     endpoint: o.endpoint,
     region: o.region,
     credentials: { accessKeyId: o.accessKeyId, secretAccessKey: o.secretAccessKey },
     forcePathStyle: true,
+    // AWS SDK v3 sends CRC32 checksums by default; R2 still rejects those on PutObject.
+    requestChecksumCalculation: 'WHEN_REQUIRED',
+    responseChecksumValidation: 'WHEN_REQUIRED',
   });
   return {
     driver: 's3',
     async put(key, body, contentType) {
       assertSafeKey(key);
-      await client.send(new PutObjectCommand({ Bucket: o.bucket, Key: key, Body: body, ContentType: contentType }));
+      try {
+        await client.send(new PutObjectCommand({ Bucket: o.bucket, Key: key, Body: body, ContentType: contentType }));
+      } catch (error) {
+        mapS3Error(error);
+      }
     },
     async get(key) {
       assertSafeKey(key);

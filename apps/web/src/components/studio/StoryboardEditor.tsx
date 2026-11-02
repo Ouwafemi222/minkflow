@@ -94,7 +94,8 @@ export function StoryboardEditor({ view, busy, onSaveState, onSaved, onConflict,
     editSeq.current += 1;
     dispatch({ type: 'edit', next });
   };
-  const patchSelected = (patch: Partial<Draft>) => edit(history.present.map((d, i) => (i === selectedIndex ? { ...d, ...patch } : d)));
+  const patchAt = (index: number, patch: Partial<Draft>) => edit(history.present.map((d, i) => (i === index ? { ...d, ...patch } : d)));
+  const patchSelected = (patch: Partial<Draft>) => patchAt(selectedIndex, patch);
 
   // Debounced autosave with optimistic concurrency.
   useEffect(() => {
@@ -201,7 +202,7 @@ export function StoryboardEditor({ view, busy, onSaveState, onSaved, onConflict,
         <div className="row">
           <h2 style={{ margin: 0 }}>Storyboard</h2>
           <span className="small muted">
-            {history.present.length} scenes · {Math.round(seconds)}s
+            {history.present.length} scenes · {Math.round(seconds)}s · Edit each voice line so it matches the picture
           </span>
           {missingVoice > 0 ? <span className="badge warning">{missingVoice === 1 ? '1 scene needs voice' : `${missingVoice} scenes need voice`}</span> : <span className="badge success">Voice ready</span>}
         </div>
@@ -225,12 +226,26 @@ export function StoryboardEditor({ view, busy, onSaveState, onSaved, onConflict,
               <span className="small muted">
                 {i + 1}. {TEMPLATE_META[draft.template as Scene['template']]?.label ?? draft.template}
               </span>
-              <span className="scene-text">{draft.narration}</span>
               <span className="small muted row" style={{ ['--gap' as string]: '4px' }}>
                 {scene?.voiceAssetId ? <Mic size={12} aria-label="Voice ready" /> : <MicOff size={12} aria-label="Needs voice" />}
                 {scene ? `${(scene.durationFrames / VIDEO.fps).toFixed(1)}s` : 'Invalid'}
               </span>
             </button>
+            <label className="field scene-voice-field">
+              <span className="small" style={{ fontWeight: 600 }}>
+                Voice line
+              </span>
+              <textarea
+                className="input scene-voice"
+                rows={3}
+                maxLength={600}
+                value={draft.narration}
+                disabled={!editable}
+                aria-label={`Scene ${i + 1} voice line`}
+                onFocus={() => select(draft.id)}
+                onChange={(e) => patchAt(i, { narration: e.target.value })}
+              />
+            </label>
             {i === selectedIndex && editable ? (
               <div className="row" style={{ ['--gap' as string]: '2px' }}>
                 <button className="btn sm ghost" aria-label="Move scene up" disabled={i === 0} onClick={() => move(i, i - 1)}>
@@ -320,11 +335,18 @@ export function StoryboardEditor({ view, busy, onSaveState, onSaved, onConflict,
             </label>
             <div className="stack" style={{ ['--gap' as string]: '6px' }}>
               <label className="field">
-                Narration
-                <textarea className="input" rows={5} maxLength={600} value={selected.draft.narration} aria-describedby="narration-hint" onChange={(e) => patchSelected({ narration: e.target.value })} />
+                What the voice says
+                <textarea
+                  className="input"
+                  rows={6}
+                  maxLength={600}
+                  value={selected.draft.narration}
+                  aria-describedby="voice-hint"
+                  onChange={(e) => patchSelected({ narration: e.target.value })}
+                />
               </label>
-              <span id="narration-hint" className="small muted">
-                {selected.scene?.voiceAssetId ? 'Editing the narration regenerates the voice for this scene only.' : 'Voice will be generated for this scene only.'}
+              <span id="voice-hint" className="small muted">
+                {selected.draft.narration.length}/600 · This exact line is spoken in this scene. {selected.scene?.voiceAssetId ? 'Changing it regenerates voice for this scene only.' : 'Generate voice after you are happy with the line.'}
               </span>
             </div>
             <label className="field">
