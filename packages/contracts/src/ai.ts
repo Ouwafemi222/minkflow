@@ -8,7 +8,7 @@ export const DURATION_PRESETS_SECONDS = [60, 120, 180, 300] as const;
 export const ProjectInputSchema = z
   .object({
     mode: z.enum(['topic', 'script']),
-    topic: z.string().trim().max(300).optional(),
+    topic: z.string().trim().max(4000).optional(),
     script: z.string().trim().max(9000).optional(),
     audience: z.enum(AUDIENCES),
     tone: z.enum(TONES),
@@ -52,6 +52,33 @@ export const ScriptSchema = z.object({
     .max(30),
 });
 export type Script = z.infer<typeof ScriptSchema>;
+
+const clip = (s: string, max: number) => (s.length <= max ? s : `${s.slice(0, max - 1).replace(/\s+\S*$/, '')}…`.trim()) || s.slice(0, max);
+const sentences = (text: string) => text.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map((s) => s.trim()).filter(Boolean) ?? [];
+
+/**
+ * Turns the creator's own prompt or pasted narration into a script document without calling an LLM.
+ * Used when they already wrote the brief and do not want Minkflow to draft a new script.
+ */
+export function scriptFromPrompt(text: string, fallbackTitle = 'Untitled video'): Script {
+  const raw = text.replace(/[*#_]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const titled = raw.match(/titled\s+["“']?([^"”'.\n]{3,80})/i)?.[1]?.trim();
+  const title = clip(titled || fallbackTitle || sentences(raw)[0] || 'Untitled video', 100).padEnd(3, '.');
+  const source = raw.length >= 10 ? raw : `${raw} explained simply.`.padEnd(10, '.');
+  const paragraphs = text.split(/\n\s*\n/).map((p) => p.replace(/[*#_]+/g, ' ').replace(/\s+/g, ' ').trim()).filter((p) => p.length >= 10);
+  let chunks = paragraphs.length >= 2 ? paragraphs : sentences(source);
+  if (chunks.length < 2) {
+    const mid = Math.max(10, Math.ceil(source.length / 2));
+    chunks = [source.slice(0, mid).trim(), source.slice(mid).trim()].filter((c) => c.length >= 10);
+  }
+  if (chunks.length < 2) chunks = [clip(source, 2500), 'Thanks for watching. Subscribe for more simple explainers.'];
+  const sections = chunks.slice(0, 20).map((chunk, i, all) => ({
+    kind: (i === 0 ? 'hook' : i === all.length - 1 ? 'outro' : i === 1 ? 'example' : 'body') as Script['sections'][number]['kind'],
+    heading: clip(sentences(chunk)[0] ?? `Part ${i + 1}`, 80) || `Part ${i + 1}`,
+    text: clip(chunk, 2500).padEnd(10, '.'),
+  }));
+  return ScriptSchema.parse({ title, sections, claims: [] });
+}
 
 export const ApprovedScriptSchema = ScriptSchema.extend({
   approvedAt: z.iso.datetime(),

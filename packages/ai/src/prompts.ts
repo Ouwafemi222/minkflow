@@ -65,6 +65,7 @@ ${GUARDRAILS}
 Schema: {"scenes": [{"template": string, "narration": string (5-600 chars), "visual": object, "transition": string}]}
 ${TEMPLATE_GUIDE}
 Guidance: about ${sceneTarget} scenes. The concatenated narration must cover the whole script in order, using the script's words.
+The creator prompt is the source of truth for the video's subject, title, tone, and on-screen ideas. Do not ignore it or replace it with a generic explainer.
 "narration" is the spoken voiceover only: plain sentences the host reads aloud. No markdown, no camera/stage directions, no scene headings, no "Narration:" labels.
 Put on-screen copy in "visual". Heading and points must be real short phrases from that scene — never empty, never placeholders like "Point 1".
 Start with title_reveal, end with closing_cta.
@@ -72,7 +73,11 @@ Most body scenes MUST use character_explains so a physical host character is on 
 Balance the rest: insert stat_comparison, charts, timeline, or process_steps only when the script has numbers or a clear sequence. Do not fill the video with title cards and empty icon grids.
 Keep on-screen text short and readable; it supports the narration rather than repeating it.`,
     },
-    { role: 'user', content: wrapUserData('APPROVED_SCRIPT', JSON.stringify({ title: script.title, sections: script.sections })) },
+    {
+      role: 'user',
+      content: `${wrapUserData('CREATOR_PROMPT', (input.mode === 'topic' ? input.topic : input.script) ?? '')}
+${wrapUserData('APPROVED_SCRIPT', JSON.stringify({ title: script.title, sections: script.sections }))}`,
+    },
   ];
 }
 

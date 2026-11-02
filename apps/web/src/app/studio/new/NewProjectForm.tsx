@@ -28,6 +28,7 @@ export function NewProjectForm({ voices }: { voices: Voice[] }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
+  const [intent, setIntent] = useState<'storyboard' | 'script'>('storyboard');
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -43,7 +44,11 @@ export function NewProjectForm({ voices }: { voices: Voice[] }) {
     try {
       const title = (mode === 'topic' ? topic : script.split('\n')[0] ?? 'Untitled').trim().slice(0, 80) || 'Untitled video';
       const { project } = await api<{ project: { id: string } }>('/api/projects', { method: 'POST', body: { title, input: parsed.data, themePreset, captionsEnabled } });
-      await api(`/api/projects/${project.id}/script`, { method: 'POST', idempotencyKey: `initial-${project.id}` });
+      if (intent === 'storyboard') {
+        await api(`/api/projects/${project.id}/from-prompt`, { method: 'POST', idempotencyKey: `from-prompt-${project.id}` });
+      } else {
+        await api(`/api/projects/${project.id}/script`, { method: 'POST', idempotencyKey: `initial-${project.id}` });
+      }
       router.push(`/studio/projects/${project.id}`);
     } catch (error) {
       setFormError(errorMessage(error));
@@ -66,7 +71,8 @@ export function NewProjectForm({ voices }: { voices: Voice[] }) {
       {mode === 'topic' ? (
         <label className="field">
           What should the video explain?
-          <input className="input" value={topic} maxLength={300} onChange={(e) => setTopic(e.target.value)} placeholder="e.g. How compound interest works" aria-invalid={Boolean(errors.topic)} aria-describedby="topic-err" />
+          <span className="hint">Paste the prompt you already wrote. We will use it as-is — we will not draft a new script unless you ask.</span>
+          <textarea className="input" rows={6} value={topic} maxLength={4000} onChange={(e) => setTopic(e.target.value)} placeholder="e.g. How compound interest works — or paste a full production prompt" aria-invalid={Boolean(errors.topic)} aria-describedby="topic-err" />
           <span id="topic-err" className="error-text">{errors.topic}</span>
         </label>
       ) : (
@@ -118,11 +124,16 @@ export function NewProjectForm({ voices }: { voices: Voice[] }) {
 
       {formError ? <p className="alert error" role="alert">{formError}</p> : null}
       <div className="row">
-        <button className="btn primary" type="submit" disabled={submitting}>
-          {submitting ? 'Creating…' : 'Write my script'}
+        <button className="btn primary" type="submit" disabled={submitting} onClick={() => setIntent('storyboard')}>
+          {submitting && intent === 'storyboard' ? 'Creating…' : 'Generate your video'}
         </button>
-        <span className="small muted">You can edit everything before anything is voiced or rendered.</span>
+        <button className="btn" type="submit" disabled={submitting} onClick={() => setIntent('script')}>
+          {submitting && intent === 'script' ? 'Creating…' : 'Write my script'}
+        </button>
       </div>
+      <p className="small muted" style={{ margin: 0 }}>
+        Generate your video uses your prompt and builds the storyboard (3 credits). Write my script drafts spoken lines first (2 credits) if you only have a short topic.
+      </p>
     </form>
   );
 }

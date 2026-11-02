@@ -117,7 +117,7 @@ export function ProjectStudio({ initial, aiMode, voices }: { initial: ProjectVie
         </section>
       ) : null}
 
-      {doc.script && !doc.storyboard ? (
+      {doc.script && !doc.storyboard && !storyboardWorking ? (
         <ScriptReview
           view={view}
           busy={busy !== null || storyboardWorking}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applySceneEdit, defaultVisualFor, mergeClientStoryboard, quoteMicro, SceneSchema, statusesThatCanReach, TEMPLATE_IDS, type Scene } from './index';
+import { applySceneEdit, defaultVisualFor, mergeClientStoryboard, quoteMicro, SceneSchema, scriptFromPrompt, statusesThatCanReach, TEMPLATE_IDS, type Scene } from './index';
 
 const voiced = (narration: string): Scene =>
   SceneSchema.parse({
@@ -52,6 +52,16 @@ describe('template defaults', () => {
       const scene = { id: crypto.randomUUID(), template, narration: 'Compound interest grows your money over time. It is simple.', visual: defaultVisualFor(template, 'Compound interest grows your money over time. It is simple.'), transition: 'fade', durationFrames: 90, captions: [], assets: [] };
       expect(SceneSchema.safeParse(scene).success, template).toBe(true);
     }
+  });
+});
+
+describe('script from the creator prompt', () => {
+  it('keeps the prompt words and does not invent a new script', () => {
+    const script = scriptFromPrompt('Create a premium 45-second 2D animated tutorial titled How to Remove a SIM Card from a phone. Show each step on screen.');
+    expect(script.title.toLowerCase()).toContain('how to remove a sim card');
+    expect(script.sections.length).toBeGreaterThanOrEqual(2);
+    expect(script.sections.map((s) => s.text).join(' ').toLowerCase()).toContain('sim card');
+    expect(script.claims).toEqual([]);
   });
 });
 

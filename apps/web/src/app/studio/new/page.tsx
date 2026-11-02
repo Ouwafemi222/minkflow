@@ -13,7 +13,7 @@ export default async function NewProjectPage() {
     <div className="stack" style={{ maxWidth: 760, ['--gap' as string]: '16px' }}>
       <h1 style={{ margin: 0 }}>New video</h1>
       <p className="muted" style={{ margin: 0 }}>
-        We’ll draft a script for you to review first. Writing the script costs {PRICING.scriptCredits} credits.
+        If you already wrote the prompt, generate the video from it. Or ask Minkflow to write a script first ({PRICING.scriptCredits} credits) when you only have a short topic.
       </p>
       {env().AI_PROVIDER_MODE === 'mock' ? (
         <p className="alert warning small">Offline mock mode: scripts are templated and voices are placeholder tones, not real AI output.</p>
