@@ -96,7 +96,11 @@ export function resolveVoiceId(requested: string, voices: Voice[]): string {
   return fallback;
 }
 
-export function parseVoiceList(raw: string | undefined): Voice[] {
+/** Product allowlist used when ELEVENLABS_VOICE_IDS is unset (live Studio must still show a picker). */
+export const DEFAULT_ELEVENLABS_VOICE_IDS =
+  'Xb7hH8MSUJpSbSDYk0k2:Alice:Clear British educator,SAz9YHcvj6GT2YYXdXww:River:Calm neutral narrator,onwK4e9ZLuTAKqWW03F9:Daniel:Steady British broadcaster,XrExE9yKIg1WjnnlVkGX:Matilda:Knowledgeable American,nPczCjzI2devNBz1zQrb:Brian:Deep and comforting,EXAVITQu4vr4xnSDxMaL:Sarah:Confident and reassuring';
+
+function splitVoiceList(raw: string | undefined): Voice[] {
   return (raw ?? '')
     .split(',')
     .map((entry) => entry.trim())
@@ -105,4 +109,9 @@ export function parseVoiceList(raw: string | undefined): Voice[] {
       const [id, name, description] = entry.split(':');
       return { id: id!.trim(), name: (name ?? id!).trim(), description: (description ?? '').trim() };
     });
+}
+
+export function parseVoiceList(raw: string | undefined): Voice[] {
+  const parsed = splitVoiceList(raw);
+  return parsed.length > 0 ? parsed : splitVoiceList(DEFAULT_ELEVENLABS_VOICE_IDS);
 }
