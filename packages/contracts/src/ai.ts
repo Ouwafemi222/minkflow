@@ -77,6 +77,7 @@ export const StoryboardSceneDraftSchema = z.discriminatedUnion('template', [
   draftVariant('quote_focus'),
   draftVariant('bar_chart'),
   draftVariant('line_chart'),
+  draftVariant('character_explains'),
   draftVariant('before_after'),
   draftVariant('closing_cta'),
 ]);

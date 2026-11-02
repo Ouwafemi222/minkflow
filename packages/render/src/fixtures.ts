@@ -43,6 +43,14 @@ function techVisual(title: string, template: StoryboardSceneDraft['template'], i
     case 'line_chart': return { title, unit: '%', points: [{ label: '00h', value: 20 }, { label: '06h', value: 12 }, { label: '12h', value: 55 }, { label: '18h', value: 80 }, { label: '23h', value: 60 }] };
     case 'before_after': return { before: { title: 'Before', points: ['Slow page loads', 'Single server'] }, after: { title: 'After', points: ['Fast global access', 'Many edge locations'] } };
     case 'quote_focus': return { quote: 'Simple rules, applied at enormous scale, create surprisingly complex systems.', attribution: 'Illustrative quote' };
+    case 'character_explains':
+      return {
+        character: (['alex', 'sam', 'rio', 'kai'] as const)[i % 4]!,
+        pose: (['talking', 'pointing', 'thinking', 'presenting', 'celebrating'] as const)[i % 5]!,
+        heading: title,
+        points: ['The idea in one line', 'Why it matters'],
+        prop: 'lightbulb',
+      };
     case 'closing_cta': return { headline: title, cta: 'Subscribe for more', handle: '@techexplained' };
   }
 }

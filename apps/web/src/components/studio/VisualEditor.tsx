@@ -1,6 +1,6 @@
 'use client';
 
-import { ICON_IDS } from '@minkflow/contracts';
+import { CHARACTER_IDS, CHARACTER_POSES, ICON_IDS } from '@minkflow/contracts';
 
 type Json = string | number | boolean | null | undefined | Json[] | { [k: string]: Json };
 
@@ -10,10 +10,32 @@ const label = (key: string) => key.replace(/_/g, ' ').replace(/([a-z])([A-Z])/g,
 export function VisualEditor({ value, onChange, path = 'visual', name = '' }: { value: Json; onChange: (next: Json) => void; path?: string; name?: string }) {
   const id = path.replace(/[^\w-]/g, '-');
   if (typeof value === 'string') {
-    if (name === 'icon') {
+    if (name === 'icon' || name === 'prop') {
       return (
         <select id={id} className="input" value={value} onChange={(e) => onChange(e.target.value)}>
           {ICON_IDS.map((icon) => <option key={icon} value={icon}>{icon}</option>)}
+        </select>
+      );
+    }
+    if (name === 'character') {
+      return (
+        <select id={id} className="input" value={value} onChange={(e) => onChange(e.target.value)}>
+          {CHARACTER_IDS.map((character) => (
+            <option key={character} value={character}>
+              {character.charAt(0).toUpperCase() + character.slice(1)}
+            </option>
+          ))}
+        </select>
+      );
+    }
+    if (name === 'pose') {
+      return (
+        <select id={id} className="input" value={value} onChange={(e) => onChange(e.target.value)}>
+          {CHARACTER_POSES.map((pose) => (
+            <option key={pose} value={pose}>
+              {pose}
+            </option>
+          ))}
         </select>
       );
     }

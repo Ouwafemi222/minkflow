@@ -36,7 +36,12 @@ export async function planStoryboard(llm: LlmProvider, script: Script, input: Pr
     postValidate: (b) => {
       const words = b.scenes.reduce((n, s) => n + s.narration.split(/\s+/).length, 0);
       const maxWords = Math.round((input.targetSeconds + 60) * 3);
-      return words > maxWords ? `Total narration is ${words} words; keep it under ${maxWords}.` : null;
+      if (words > maxWords) return `Total narration is ${words} words; keep it under ${maxWords}.`;
+      const body = b.scenes.slice(1, -1);
+      if (body.length >= 1 && !body.some((s) => s.template === 'character_explains')) {
+        return 'At least one body scene must use template character_explains so a host character is on screen.';
+      }
+      return null;
     },
   });
   return { storyboard: result.value, usages: result.usages };

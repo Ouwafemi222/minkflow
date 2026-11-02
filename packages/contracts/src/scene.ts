@@ -13,10 +13,17 @@ export const TEMPLATE_IDS = [
   'quote_focus',
   'bar_chart',
   'line_chart',
+  'character_explains',
   'before_after',
   'closing_cta',
 ] as const;
 export type TemplateId = (typeof TEMPLATE_IDS)[number];
+
+/** Reusable 2D hosts. One character should stay on screen for a whole video. */
+export const CHARACTER_IDS = ['alex', 'sam', 'rio', 'kai'] as const;
+export type CharacterId = (typeof CHARACTER_IDS)[number];
+export const CHARACTER_POSES = ['talking', 'pointing', 'thinking', 'presenting', 'celebrating'] as const;
+export type CharacterPose = (typeof CHARACTER_POSES)[number];
 
 export const TEMPLATE_META: Record<TemplateId, { label: string; description: string }> = {
   title_reveal: { label: 'Title reveal', description: 'Big title with optional subtitle and icon' },
@@ -27,6 +34,7 @@ export const TEMPLATE_META: Record<TemplateId, { label: string; description: str
   quote_focus: { label: 'Quote focus', description: 'A single highlighted quote' },
   bar_chart: { label: 'Bar chart', description: '2–8 animated bars' },
   line_chart: { label: 'Line chart', description: '3–12 points drawn as a line' },
+  character_explains: { label: 'Character explains', description: 'A host character presents the idea on a board' },
   before_after: { label: 'Before / after', description: 'Two-column contrast' },
   closing_cta: { label: 'Closing call to action', description: 'Outro with call to action' },
 };
@@ -74,6 +82,13 @@ export const VisualSchemas = {
     unit: text(10).optional(),
     points: z.array(z.object({ label: text(12), value: finite })).min(3).max(12),
   }),
+  character_explains: z.object({
+    character: z.enum(CHARACTER_IDS),
+    pose: z.enum(CHARACTER_POSES),
+    heading: text(60),
+    points: z.array(text(50)).min(1).max(3),
+    prop: IconSchema.optional(),
+  }),
   before_after: z.object({
     before: z.object({ title: text(30), points: z.array(text(50)).min(1).max(4) }),
     after: z.object({ title: text(30), points: z.array(text(50)).min(1).max(4) }),
@@ -112,6 +127,7 @@ export const SceneSchema = z.discriminatedUnion('template', [
   sceneVariant('quote_focus'),
   sceneVariant('bar_chart'),
   sceneVariant('line_chart'),
+  sceneVariant('character_explains'),
   sceneVariant('before_after'),
   sceneVariant('closing_cta'),
 ]);

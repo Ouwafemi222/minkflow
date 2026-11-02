@@ -24,7 +24,7 @@ export function scriptMessages(input: ProjectInput): ChatMessage[] {
   return [
     {
       role: 'system',
-      content: `You write narration scripts for 2D animated educational explainer videos for faceless YouTube creators.
+      content: `You write narration scripts for 2D animated educational explainer videos for faceless YouTube creators. An illustrated host character will appear on screen presenting the ideas while this narration is spoken.
 ${GUARDRAILS}
 Schema: {"title": string (3-100 chars), "sections": [{"kind": "hook"|"body"|"example"|"outro", "heading": string (<=80), "text": string (10-2500)}] (2-20 items), "claims": [{"text": string, "sectionIndex": number, "reason": string}] (<=30)}
 Structure: first section kind "hook", last section kind "outro", at least one "example".
@@ -48,10 +48,12 @@ const TEMPLATE_GUIDE = `Allowed templates and their "visual" objects (respect ma
 - quote_focus: {"quote" (<=200, must be original wording, not a real person's quote), "attribution"? (<=60)}
 - bar_chart: {"title" (<=60), "unit"? (<=10), "bars": 2-8 of {"label" (<=20), "value": number >= 0}}
 - line_chart: {"title" (<=60), "unit"? (<=10), "points": 3-12 of {"label" (<=12), "value": number}}
+- character_explains: {"character": "alex"|"sam"|"rio"|"kai", "pose": "talking"|"pointing"|"thinking"|"presenting"|"celebrating", "heading" (<=60), "points": 1-3 strings (<=50), "prop"? icon}
 - before_after: {"before": {"title" (<=30), "points": 1-4 strings (<=50)}, "after": same}
 - closing_cta: {"headline" (<=80), "cta" (<=40), "handle"? (<=40)}
 "icon" must be one of: ${ICON_IDS.join(', ')}.
-"transition" is one of: none, fade, slide_left, slide_up, zoom.`;
+"transition" is one of: none, fade, slide_left, slide_up, zoom.
+Keep the SAME "character" id for every character_explains scene in the video.`;
 
 export function storyboardMessages(script: Script, input: ProjectInput): ChatMessage[] {
   const sceneTarget = Math.max(3, Math.min(DURATION_LIMITS.maxScenes, Math.round(input.targetSeconds / 12)));
@@ -64,7 +66,10 @@ Schema: {"scenes": [{"template": string, "narration": string (5-600 chars), "vis
 ${TEMPLATE_GUIDE}
 Guidance: about ${sceneTarget} scenes. The concatenated narration must cover the whole script in order, using the script's words.
 "narration" is the spoken voiceover only: plain sentences the host reads aloud. No markdown, no camera/stage directions, no scene headings, no "Narration:" labels.
-Put on-screen copy in "visual". Start with title_reveal, end with closing_cta. Vary templates; choose charts only when the narration contains numbers.
+Put on-screen copy in "visual". Heading and points must be real short phrases from that scene — never empty, never placeholders like "Point 1".
+Start with title_reveal, end with closing_cta.
+Most body scenes MUST use character_explains so a physical host character is on screen presenting the idea. Pose "talking" or "pointing" for explanations, "thinking" for questions, "presenting" for lists, "celebrating" for results.
+Balance the rest: insert stat_comparison, charts, timeline, or process_steps only when the script has numbers or a clear sequence. Do not fill the video with title cards and empty icon grids.
 Keep on-screen text short and readable; it supports the narration rather than repeating it.`,
     },
     { role: 'user', content: wrapUserData('APPROVED_SCRIPT', JSON.stringify({ title: script.title, sections: script.sections })) },
@@ -79,7 +84,7 @@ export function sceneRegenerateMessages(scene: StoryboardSceneDraft, neighbors: 
 ${GUARDRAILS}
 Schema: {"template": string, "narration": string (5-600), "visual": object, "transition": string}
 ${TEMPLATE_GUIDE}
-Keep the narration's meaning and flow with the neighboring scenes. You may pick a different template if it fits better.`,
+Keep the narration's meaning and flow with the neighboring scenes. Prefer character_explains so a host stays on screen, unless the creator asked for a chart or list. You may pick a different template if it fits better.`,
     },
     {
       role: 'user',

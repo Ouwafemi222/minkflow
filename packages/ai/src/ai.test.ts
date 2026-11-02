@@ -14,6 +14,7 @@ describe('planning with mock provider', () => {
     expect(StoryboardDraftSchema.parse(storyboard).scenes.length).toBeGreaterThanOrEqual(3);
     expect(storyboard.scenes[0]!.template).toBe('title_reveal');
     expect(storyboard.scenes.at(-1)!.template).toBe('closing_cta');
+    expect(storyboard.scenes.some((s) => s.template === 'character_explains')).toBe(true);
   });
 
   it('restructures a pasted script', async () => {

@@ -1,4 +1,4 @@
-import type { IconId, Script, StoryboardSceneDraft } from '@minkflow/contracts';
+import { CHARACTER_IDS, CHARACTER_POSES, type CharacterId, type IconId, type Script, type StoryboardSceneDraft } from '@minkflow/contracts';
 import { synthesizeToneNarration } from '@minkflow/shared';
 import type { ChatMessage, LlmProvider, TtsProvider, Usage, Voice } from './types';
 
@@ -21,6 +21,21 @@ function between(content: string, label: string): string {
 const clip = (s: string, max: number) => (s.length <= max ? s : `${s.slice(0, max - 1).replace(/\s+\S*$/, '')}…`).trim() || s.slice(0, max);
 const sentences = (text: string) => text.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map((s) => s.trim()).filter(Boolean) ?? [];
 const ICON_ROTATION: IconId[] = ['lightbulb', 'target', 'rocket', 'brain', 'globe', 'zap', 'shield', 'star', 'clock', 'users'];
+
+function pickCharacter(seed: string): CharacterId {
+  let n = 0;
+  for (const c of seed) n = (n + c.charCodeAt(0)) % CHARACTER_IDS.length;
+  return CHARACTER_IDS[n]!;
+}
+
+function pointsFrom(text: string): string[] {
+  const fromSentences = sentences(text)
+    .map((s) => clip(s.replace(/[.!?]+$/, ''), 50))
+    .filter((s) => s.length >= 3);
+  if (fromSentences.length >= 1) return fromSentences.slice(0, 3);
+  const fallback = clip(text.replace(/[.!?]+$/, ''), 50);
+  return [fallback.length >= 3 ? fallback : 'Key idea'];
+}
 
 function mockScript(user: string): Script {
   const topic = between(user, 'TOPIC').trim();
@@ -68,20 +83,35 @@ function mockStoryboard(user: string): { scenes: StoryboardSceneDraft[] } {
     if (last && last.text.split(/\s+/).length < 28 && last.heading === item.heading) last.text += ` ${item.sentence}`;
     else groups.push({ text: item.sentence, heading: item.heading });
   }
+  const host = pickCharacter(parsed.title);
   const scenes: StoryboardSceneDraft[] = groups.map((g, i): StoryboardSceneDraft => {
     const narration = clip(g.text, 600).padEnd(5, '.');
     const heading = clip(g.heading, 60);
     const words = g.text.replace(/[^\p{L}\p{N}\s]/gu, '').split(/\s+/).filter((w) => w.length > 4);
-    const label = (n: number, max: number) => clip(words[n % Math.max(1, words.length)] ?? `Point ${n + 1}`, max);
+    const label = (n: number, max: number) => clip(words[n % Math.max(1, words.length)] ?? heading, max);
     const numbers = (g.text.match(/\d[\d,.]*/g) ?? []).map((n) => Number(n.replace(/,/g, ''))).filter(Number.isFinite);
     if (i === 0) return { template: 'title_reveal', narration, visual: { title: clip(parsed.title, 80), subtitle: heading, icon: 'sparkles' }, transition: 'fade' };
     if (i === groups.length - 1) return { template: 'closing_cta', narration, visual: { headline: heading, cta: 'Subscribe for more' }, transition: 'fade' };
-    if (numbers.length >= 2) return { template: 'stat_comparison', narration, visual: { heading, items: numbers.slice(0, 4).map((value, k) => ({ label: label(k, 40), value })) }, transition: 'zoom' };
-    const pick = i % 4;
-    if (pick === 1) return { template: 'icon_grid', narration, visual: { heading, items: [0, 1, 2].map((k) => ({ icon: ICON_ROTATION[(i + k) % ICON_ROTATION.length]!, label: label(k, 30) })) }, transition: 'slide_left' };
-    if (pick === 2) return { template: 'process_steps', narration, visual: { heading, steps: [0, 1, 2].map((k) => ({ title: label(k + 3, 40), icon: ICON_ROTATION[(i + k + 3) % ICON_ROTATION.length]! })) }, transition: 'slide_up' };
-    if (pick === 3) return { template: 'quote_focus', narration, visual: { quote: clip(sentences(g.text)[0] ?? g.text, 200) }, transition: 'fade' };
-    return { template: 'before_after', narration, visual: { before: { title: 'Before', points: [label(0, 50)] }, after: { title: 'After', points: [label(1, 50)] } }, transition: 'fade' };
+    // Keep at least one host on screen (scene 2). Extra body scenes can be charts or steps.
+    if (i !== 1 && numbers.length >= 2) {
+      return { template: 'stat_comparison', narration, visual: { heading, items: numbers.slice(0, 4).map((value, k) => ({ label: label(k, 40), value })) }, transition: 'zoom' };
+    }
+    const sequence = /\b(first|next|then|finally|step)\b/i.test(g.text);
+    if (i !== 1 && sequence) {
+      return { template: 'process_steps', narration, visual: { heading, steps: [0, 1, 2].map((k) => ({ title: label(k, 40), icon: ICON_ROTATION[(i + k) % ICON_ROTATION.length]! })) }, transition: 'slide_up' };
+    }
+    return {
+      template: 'character_explains',
+      narration,
+      visual: {
+        character: host,
+        pose: CHARACTER_POSES[i % CHARACTER_POSES.length]!,
+        heading,
+        points: pointsFrom(g.text),
+        prop: ICON_ROTATION[i % ICON_ROTATION.length],
+      },
+      transition: i % 2 === 0 ? 'slide_left' : 'fade',
+    };
   });
   if (scenes.length < 2) scenes.push({ template: 'closing_cta', narration: 'Thanks for watching.', visual: { headline: 'Thanks for watching', cta: 'Subscribe' }, transition: 'fade' });
   return { scenes };
@@ -90,10 +120,17 @@ function mockStoryboard(user: string): { scenes: StoryboardSceneDraft[] } {
 function mockRegenerate(user: string): StoryboardSceneDraft {
   const current = JSON.parse(between(user, 'CURRENT_SCENE')) as StoryboardSceneDraft;
   const request = between(user, 'CREATOR_REQUEST').trim();
+  const host = current.template === 'character_explains' ? current.visual.character : pickCharacter(current.narration);
   return {
-    template: 'icon_grid',
+    template: 'character_explains',
     narration: current.narration,
-    visual: { heading: clip(request || 'Key ideas', 60), items: [{ icon: 'lightbulb', label: 'Idea' }, { icon: 'target', label: 'Goal' }, { icon: 'rocket', label: 'Result' }] },
+    visual: {
+      character: host,
+      pose: 'presenting',
+      heading: clip(request || (current.template === 'character_explains' ? current.visual.heading : 'Key idea'), 60),
+      points: pointsFrom(request || current.narration),
+      prop: 'lightbulb',
+    },
     transition: current.transition ?? 'fade',
   };
 }

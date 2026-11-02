@@ -150,6 +150,14 @@ export function defaultVisualFor(template: Scene['template'], narration: string)
       return { title: heading, bars: [{ label: 'A', value: 3 }, { label: 'B', value: 5 }, { label: 'C', value: 8 }] };
     case 'line_chart':
       return { title: heading, points: [{ label: '1', value: 1 }, { label: '2', value: 3 }, { label: '3', value: 6 }, { label: '4', value: 10 }] };
+    case 'character_explains':
+      return {
+        character: 'alex',
+        pose: 'talking',
+        heading,
+        points: [clip(firstSentence.replace(/[.!?]$/, ''), 50)],
+        prop: 'sparkles',
+      };
     case 'before_after':
       return { before: { title: 'Before', points: ['The old way'] }, after: { title: 'After', points: ['The new way'] } };
     case 'closing_cta':

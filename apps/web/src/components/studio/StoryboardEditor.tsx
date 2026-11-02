@@ -20,6 +20,16 @@ const TRANSITIONS: Scene['transition'][] = ['none', 'fade', 'slide_left', 'slide
 const EDITABLE = new Set(['storyboard_ready', 'media_ready', 'preview_ready', 'completed', 'failed', 'canceled']);
 const toDraft = (s: Scene): Draft => ({ id: s.id, template: s.template, narration: s.narration, visual: s.visual, transition: s.transition });
 
+function onScreenLine(visual: unknown): string {
+  if (!visual || typeof visual !== 'object') return '';
+  const v = visual as Record<string, unknown>;
+  if (typeof v.heading === 'string' && v.heading.trim()) return v.heading;
+  if (typeof v.title === 'string' && v.title.trim()) return v.title;
+  if (typeof v.headline === 'string' && v.headline.trim()) return v.headline;
+  if (typeof v.quote === 'string' && v.quote.trim()) return v.quote;
+  return '';
+}
+
 function reducer(h: History<Draft[]>, a: Action): History<Draft[]> {
   if (a.type === 'edit') return push(h, a.next);
   if (a.type === 'undo') return undo(h);
@@ -226,6 +236,7 @@ export function StoryboardEditor({ view, busy, onSaveState, onSaved, onConflict,
               <span className="small muted">
                 {i + 1}. {TEMPLATE_META[draft.template as Scene['template']]?.label ?? draft.template}
               </span>
+              {onScreenLine(draft.visual) ? <span className="scene-text">{onScreenLine(draft.visual)}</span> : null}
               <span className="small muted row" style={{ ['--gap' as string]: '4px' }}>
                 {scene?.voiceAssetId ? <Mic size={12} aria-label="Voice ready" /> : <MicOff size={12} aria-label="Needs voice" />}
                 {scene ? `${(scene.durationFrames / VIDEO.fps).toFixed(1)}s` : 'Invalid'}

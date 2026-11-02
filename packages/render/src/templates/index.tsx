@@ -1,5 +1,6 @@
 import { TEMPLATE_META, type Scene, type Theme } from '@minkflow/contracts';
 import type { ReactElement } from 'react';
+import { CharacterExplains } from './character';
 import { BarChart, LineChart, StatComparison } from './data';
 import { BeforeAfter, IconGrid, ProcessSteps, Timeline } from './structure';
 import { ClosingCta, QuoteFocus, TitleReveal } from './text';
@@ -32,6 +33,8 @@ export function renderTemplate({ scene, ...rest }: RenderArgs): ReactElement {
       return <BarChart visual={scene.visual} {...rest} />;
     case 'line_chart':
       return <LineChart visual={scene.visual} {...rest} />;
+    case 'character_explains':
+      return <CharacterExplains visual={scene.visual} {...rest} />;
     case 'before_after':
       return <BeforeAfter visual={scene.visual} {...rest} />;
     case 'closing_cta':
