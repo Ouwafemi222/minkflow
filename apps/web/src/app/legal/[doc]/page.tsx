@@ -20,7 +20,7 @@ export default async function LegalPage({ params }: { params: Promise<{ doc: str
   if (!page) notFound();
   return (
     <MarketingShell>
-      <article className="container prose" style={{ padding: '40px 20px' }}>
+      <article className="container prose legal-article">
         <p className="alert warning small">Beta draft — this document is under legal review and may change before public launch.</p>
         <h1>{page.title}</h1>
         <p className="muted">{page.summary}</p>

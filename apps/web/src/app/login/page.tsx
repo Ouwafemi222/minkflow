@@ -15,7 +15,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const issues = envIssues();
   if (issues) {
     return (
-      <main id="main" className="container" style={{ maxWidth: 520, paddingTop: 64 }}>
+      <main id="main" className="container login-page" style={{ maxWidth: 520 }}>
         <Logo />
         <div className="card stack" style={{ marginTop: 24 }}>
           <h1 style={{ margin: 0, fontSize: 24 }}>This site is not fully configured yet</h1>
@@ -38,7 +38,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const next = params.next?.startsWith('/') && !params.next.startsWith('//') ? params.next : '/studio';
   const providers = await authProviders();
   return (
-    <main id="main" className="container" style={{ maxWidth: 440, paddingTop: 64 }}>
+    <main id="main" className="container login-page">
       <Logo />
       <div className="card stack" style={{ marginTop: 24 }}>
         <h1 style={{ margin: 0, fontSize: 24 }}>{params.mode === 'signup' ? 'Create your account' : 'Welcome to Minkflow'}</h1>

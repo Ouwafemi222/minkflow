@@ -13,21 +13,44 @@ export function Logo({ href = '/' }: { href?: string }) {
   );
 }
 
+function NavLinks({ compact = false }: { compact?: boolean }) {
+  return (
+    <>
+      <Link href="/pricing" className={compact ? undefined : 'btn ghost'}>
+        Pricing
+      </Link>
+      <Link href="/login" className={compact ? undefined : 'btn ghost'}>
+        Sign in
+      </Link>
+      <Link href="/login?mode=signup" className={compact ? undefined : 'btn primary'}>
+        Start free
+      </Link>
+    </>
+  );
+}
+
 export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
   return (
     <header className={overlay ? 'site-header overlay' : 'site-header'}>
-      <div className="container spread">
+      <div className="container site-header-bar">
         <Logo />
-        <nav aria-label="Main" className="row">
-          <Link href="/pricing" className="btn ghost">
-            Pricing
-          </Link>
-          <Link href="/login" className="btn ghost">
-            Sign in
-          </Link>
-          <Link href="/login?mode=signup" className="btn primary">
-            Start free
-          </Link>
+        <nav aria-label="Main" className="site-nav">
+          <div className="site-nav-wide">
+            <NavLinks />
+          </div>
+          <div className="site-nav-narrow">
+            <Link href="/login?mode=signup" className="btn primary">
+              Start free
+            </Link>
+            <details className="site-menu">
+              <summary className="btn ghost site-menu-toggle" aria-label="Open menu">
+                <span className="site-menu-bars" aria-hidden="true" />
+              </summary>
+              <div className="site-menu-panel">
+                <NavLinks compact />
+              </div>
+            </details>
+          </div>
         </nav>
       </div>
     </header>
@@ -37,7 +60,7 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
 export function SiteFooter() {
   return (
     <footer className="site-footer">
-      <div className="container spread small muted">
+      <div className="container site-footer-inner small muted">
         <span>
           © {new Date().getFullYear()} {brand.name}. {brand.tagline}
         </span>

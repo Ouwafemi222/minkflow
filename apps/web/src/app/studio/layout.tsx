@@ -21,7 +21,7 @@ export default async function StudioLayout({ children }: { children: ReactNode }
   return (
     <div className="studio" data-studio-theme="dark" style={{ background: 'var(--surface-page)', color: 'var(--text-primary)' }}>
       <aside className="studio-nav" aria-label="Studio">
-        <div className="studio-nav-brand" style={{ padding: '4px 6px 16px' }}>
+        <div className="studio-nav-brand">
           <Logo href="/studio" />
         </div>
         <StudioNav isAdmin={isAdminEmail(session.email)} youtube={youtube} />

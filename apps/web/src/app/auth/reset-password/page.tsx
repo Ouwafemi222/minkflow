@@ -16,7 +16,7 @@ export default async function ResetPasswordPage() {
   const session = await getSession();
   if (!session) redirect('/login?error=link');
   return (
-    <main id="main" className="container" style={{ maxWidth: 440, paddingTop: 64 }}>
+    <main id="main" className="container login-page">
       <Logo />
       <div className="card stack" style={{ marginTop: 24 }}>
         <h1 style={{ margin: 0, fontSize: 24 }}>Choose a new password</h1>

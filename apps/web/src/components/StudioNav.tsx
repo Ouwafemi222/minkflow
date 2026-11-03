@@ -20,7 +20,7 @@ export function StudioNav({ isAdmin, youtube }: { isAdmin: boolean; youtube: Nav
   ];
   return (
     <>
-      <nav className="stack" style={{ ['--gap' as string]: '2px' }}>
+      <nav className="stack studio-nav-links" style={{ ['--gap' as string]: '2px' }}>
         {links.map(({ href, label, icon: Icon, active }) => (
           <Link key={href} href={href} className="nav-link" aria-current={active ? 'page' : undefined}>
             <Icon size={18} aria-hidden="true" />

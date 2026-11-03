@@ -1,5 +1,5 @@
 import { brand } from '@minkflow/brand';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import './globals.css';
 
@@ -7,6 +7,13 @@ export const metadata: Metadata = {
   title: { default: `${brand.name} — ${brand.tagline}`, template: `%s · ${brand.name}` },
   description: brand.description,
   metadataBase: new URL(process.env.APP_BASE_URL ?? 'http://localhost:3000'),
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#0b1020',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

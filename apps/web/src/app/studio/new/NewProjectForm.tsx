@@ -58,7 +58,7 @@ export function NewProjectForm({ voices }: { voices: Voice[] }) {
 
   return (
     <form className="card stack" onSubmit={submit} noValidate style={{ ['--gap' as string]: '16px' }}>
-      <fieldset className="row" style={{ border: 0, padding: 0, margin: 0 }}>
+      <fieldset className="row choice-toggle" style={{ border: 0, padding: 0, margin: 0 }}>
         <legend className="sr-only">Start from</legend>
         <button type="button" className={`btn ${mode === 'topic' ? 'primary' : ''}`} aria-pressed={mode === 'topic'} onClick={() => setMode('topic')}>
           Start from a topic
@@ -123,7 +123,7 @@ export function NewProjectForm({ voices }: { voices: Voice[] }) {
       </div>
 
       {formError ? <p className="alert error" role="alert">{formError}</p> : null}
-      <div className="row">
+      <div className="row form-actions">
         <button className="btn primary" type="submit" disabled={submitting} onClick={() => setIntent('storyboard')}>
           {submitting && intent === 'storyboard' ? 'Creating…' : 'Generate your video'}
         </button>

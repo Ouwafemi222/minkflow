@@ -79,7 +79,7 @@ export function ProjectStudio({ initial, aiMode, voices }: { initial: ProjectVie
   return (
     <div className="stack" style={{ ['--gap' as string]: '16px' }}>
       <header className="spread">
-        <div className="stack" style={{ ['--gap' as string]: '6px', flex: 1, minWidth: 260 }}>
+        <div className="stack" style={{ ['--gap' as string]: '6px', flex: 1, minWidth: 0 }}>
           <label className="sr-only" htmlFor="project-title">
             Project title
           </label>
