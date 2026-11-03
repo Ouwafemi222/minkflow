@@ -28,7 +28,11 @@ export async function postJson<T>(url: string, headers: Record<string, string>, 
       if (response.status === 429) {
         const text = (await response.text()).slice(0, 300);
         if (/insufficient_quota|credit_balance_exhausted|quota_exceeded/.test(text)) {
-          throw new AppError('PROVIDER_UNAVAILABLE', 'Provider account is out of credit or quota', { status: 429, reason: 'provider_quota_exhausted', body: text });
+          throw new AppError(
+            'PROVIDER_UNAVAILABLE',
+            'The writing AI (OpenAI) is out of billing credit. Your Minkflow credits were not the problem and were refunded.',
+            { status: 429, reason: 'provider_quota_exhausted', body: text },
+          );
         }
         throw new AppError('PROVIDER_RATE_LIMITED');
       }

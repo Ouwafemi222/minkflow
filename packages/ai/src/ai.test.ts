@@ -1,7 +1,9 @@
 import { ProjectInputSchema, ScriptSchema, StoryboardDraftSchema } from '@minkflow/contracts';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { createMockLlm, createMockTts, createProvidersFromEnv, generateStructured, resolveVoiceId, planScript, planStoryboard, regenerateScene, scriptMessages, wordsFromCharacterAlignment, type LlmProvider } from './index';
+
+afterEach(() => vi.unstubAllGlobals());
 
 const input = ProjectInputSchema.parse({ mode: 'topic', topic: 'Compound interest', audience: 'beginners', tone: 'friendly', targetSeconds: 60, language: 'en', aspectRatio: '16:9', voiceId: 'mock-ava' });
 
@@ -82,6 +84,31 @@ describe('TTS alignment', () => {
     expect(resolveVoiceId('mock-ava', voices)).toBe('Xb7h');
     expect(() => resolveVoiceId('mock-ava', [])).toThrow(/No voices/);
   });
+  it('falls back to the built-in planner when OpenAI billing is empty', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify({ error: { code: 'insufficient_quota', type: 'insufficient_quota' } }), { status: 429 })),
+    );
+    const { llm } = createProvidersFromEnv({
+      AI_PROVIDER_MODE: 'live',
+      OPENAI_API_KEY: 'sk-test',
+      OPENAI_MODEL_SCRIPT: 'gpt-4.1-mini',
+      OPENAI_MODEL_STORYBOARD: 'gpt-4.1-mini',
+      ELEVENLABS_API_KEY: 'k',
+      ELEVENLABS_MODEL_ID: 'm',
+      ELEVENLABS_VOICE_IDS: 'v1:Ava:Calm',
+    });
+    const result = await llm.completeJson(
+      [
+        { role: 'system', content: 'You write narration scripts.' },
+        { role: 'user', content: '<<<TOPIC\ncompound interest\nTOPIC>>>' },
+      ],
+      { model: 'script', maxOutputTokens: 400 },
+    );
+    expect(JSON.parse(result.text).title).toMatch(/compound interest/i);
+    expect(result.usage.provider).toBe('mock');
+  });
+
   it('voice mode pairs mock scripts with ElevenLabs and needs only ElevenLabs settings', () => {
     const voiceEnv = { AI_PROVIDER_MODE: 'voice' as const, ELEVENLABS_API_KEY: 'k', ELEVENLABS_MODEL_ID: 'm', ELEVENLABS_VOICE_IDS: 'v1:Ava:Calm' };
     const { llm, tts } = createProvidersFromEnv(voiceEnv);

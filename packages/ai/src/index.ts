@@ -5,8 +5,10 @@ export * from './planner';
 export { createOpenAiProvider, type OpenAiConfig } from './openai';
 export { createElevenLabsProvider, parseVoiceList, resolveVoiceId, wordsFromCharacterAlignment, type ElevenLabsConfig } from './elevenlabs';
 export { createMockLlm, createMockTts, MOCK_VOICES } from './mock';
+export { isProviderQuotaExhausted, withQuotaFallback } from './fallback';
 
 import { createElevenLabsProvider, parseVoiceList } from './elevenlabs';
+import { withQuotaFallback } from './fallback';
 import { createMockLlm, createMockTts } from './mock';
 import { createOpenAiProvider } from './openai';
 import type { LlmProvider, TtsProvider } from './types';
@@ -33,14 +35,19 @@ export function createProvidersFromEnv(env: AiEnv): { llm: LlmProvider; tts: Tts
   const missing = required.filter((k) => !env[k]);
   if (missing.length > 0) throw new Error(`AI_PROVIDER_MODE=${env.AI_PROVIDER_MODE} requires: ${missing.join(', ')}`);
   return {
-    llm: env.AI_PROVIDER_MODE === 'voice' ? createMockLlm() : createOpenAiProvider({
-      apiKey: env.OPENAI_API_KEY!,
-      scriptModel: env.OPENAI_MODEL_SCRIPT!,
-      storyboardModel: env.OPENAI_MODEL_STORYBOARD!,
-      moderationModel: env.OPENAI_MODEL_MODERATION || 'omni-moderation-latest',
-      inputUsdPer1M: Number(env.OPENAI_INPUT_USD_PER_1M ?? 5),
-      outputUsdPer1M: Number(env.OPENAI_OUTPUT_USD_PER_1M ?? 15),
-    }),
+    llm: env.AI_PROVIDER_MODE === 'voice'
+      ? createMockLlm()
+      : withQuotaFallback(
+          createOpenAiProvider({
+            apiKey: env.OPENAI_API_KEY!,
+            scriptModel: env.OPENAI_MODEL_SCRIPT!,
+            storyboardModel: env.OPENAI_MODEL_STORYBOARD!,
+            moderationModel: env.OPENAI_MODEL_MODERATION || 'omni-moderation-latest',
+            inputUsdPer1M: Number(env.OPENAI_INPUT_USD_PER_1M ?? 5),
+            outputUsdPer1M: Number(env.OPENAI_OUTPUT_USD_PER_1M ?? 15),
+          }),
+          createMockLlm(),
+        ),
     tts: createElevenLabsProvider({
       apiKey: env.ELEVENLABS_API_KEY!,
       modelId: env.ELEVENLABS_MODEL_ID!,

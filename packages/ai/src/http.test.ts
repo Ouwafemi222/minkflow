@@ -17,6 +17,8 @@ describe('postJson', () => {
     expect(error).toBeInstanceOf(AppError);
     expect((error as AppError).code).toBe('PROVIDER_UNAVAILABLE');
     expect((error as AppError).details).toMatchObject({ status: 429, reason: 'provider_quota_exhausted' });
+    expect((error as AppError).message).toMatch(/OpenAI/);
+    expect((error as AppError).message).toMatch(/Minkflow credits/);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
